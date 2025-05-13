@@ -1,6 +1,6 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
 <?php $this->need('header.php'); ?>
-<div class="col-lg-8">
+<div class="col-lg-9">
     <div class="post_container_title">
 		<h1><?php $this->title() ?></h1>
 		    <p>
@@ -27,8 +27,15 @@
 		</article>
             <?php if ($this->modified > $this->created): ?>
         <strong>最后更新于 <?php echo date('Y-m-d H:i:s', $this->modified); ?></strong>
-            <?php endif; ?>			
-		<div class="post_loop_tag">
+            <?php endif; ?>	
+    </div>
+	<div class="post_author">
+		<div class="post_author_l">
+            <?php $this->author->gravatar('60', ''); ?>
+            <span><?php $this->author(); ?></span>
+		</div>
+		<div class="post_author_r">
+        <div class="post_author_tag">
             <?php if ($this->tags): ?>
             <?php foreach ($this->tags as $tag): ?>
             <em> 
@@ -37,14 +44,8 @@
             <?php endforeach; ?>
             <?php else: ?>
             <?php endif; ?>
+            <em><i class="bi bi-list"></i> <?php $this->category(','); ?></em>
         </div>
-	</div>
-	<div class="post_author">
-		<div class="post_author_l">
-            <?php $this->author->gravatar('60', ''); ?>
-            <span><?php $this->author(); ?></span>
-		</div>
-		<div class="post_author_r">
 			<div class="post_author_icon">
 				<a href="#post_comment_anchor">
                     <i class="bi bi-chat-square-dots-fill"></i>
