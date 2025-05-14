@@ -1,6 +1,5 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
-
 function themeConfig($form)
 {
     $logoUrl = new \Typecho\Widget\Helper\Form\Element\Text(
@@ -18,6 +17,7 @@ function themeConfig($form)
         _t('站点 favicon 地址'),
         _t('在这里填入一个图片 URL 地址, 以在浏览器标签页的网站标题前加上一个 favicon')
     );
+    $form->addInput($faviconUrl); 
     $thumbUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'thumbUrl',
         null,
