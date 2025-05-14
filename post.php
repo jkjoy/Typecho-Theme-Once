@@ -5,9 +5,6 @@
 		<h1><?php $this->title() ?></h1>
 		    <p>
 		        <span><i class="bi bi-clock"></i><?php $this->date(); ?></span>
-                <span><i class="bi bi-card-list"></i>
-                    <?php $this->category(','); ?>
-                </span>
                 <span><i class="bi bi-eye"></i><?php get_post_view($this) ?></span>
 		    	<span><i class="bi bi-chat-square-text"></i>
 				    <a href="<?php $this->permalink() ?>#post_comment_anchor">
