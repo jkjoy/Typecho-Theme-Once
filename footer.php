@@ -15,10 +15,9 @@
     <div class="container">
         <div class="foot">
     	    <div class="copyright">
-                <p>Powered by <a href="https://typecho.org" rel="external nofollow" target="_blank" >Typecho</a>. <?php $this->options->title(); ?></a>. &copy; <?php echo date('Y'); ?>
+                <p> &copy; <?php echo date('Y'); ?> <?php $this->options->title(); ?>.由<a href="https://typecho.org" rel="external nofollow" target="_blank" >Typecho</a>强力驱动.<?php _e('加载耗时'); ?><?php echo timer_stop();?> 
                 </p>
-                <p>Theme by <a href="https://huitheme.com" rel="external nofollow" target="_blank">HUiTHEME</a>&<a href="https://www.imsun.org" target="_blank">老孙</a>
-                <?php _e('加载耗时'); ?><?php echo timer_stop();?>
+                <p>Theme by <a href="https://huitheme.com" rel="external nofollow" target="_blank">HUiTHEME</a>&主题支持 by<a href="https://www.imsun.org" target="_blank">老孙</a>
             </p>
             </div>
             <div class="foot_nav">

@@ -58,15 +58,10 @@
 	</div>
         <!-- /** 获取上一篇文章 */ -->
 	<div class="next_prev_posts">
-		<?php
-            // 先设定默认缩略图地址
-            $defaultThumbnailUrl = Helper::options()->themeUrl . '/assets/img/nopic.svg';
-            $prevThumbnailUrl = $defaultThumbnailUrl;
+        <?php
             $prevPost = get_previous_post($this);
-            if ($prevPost) {
-                $prevThumbnail = get_post_thumbnail($prevPost);
-                $prevThumbnailUrl = $prevThumbnail['thumbnail'];
-            }
+            $result = get_post_thumbnail($prevPost);
+            $prevThumbnailUrl = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
         ?>
         <div class="prev_next_box nav_previous">
             <?php if ($prevPost) { ?>
@@ -86,12 +81,9 @@
             <?php } ?>
         </div>
         <?php
-            $nextThumbnailUrl = $defaultThumbnailUrl;
             $nextPost = get_next_post($this);
-            if ($nextPost) {
-                $nextThumbnail = get_post_thumbnail($nextPost);
-                $nextThumbnailUrl = $nextThumbnail['thumbnail'];
-            }
+            $result = get_post_thumbnail($nextPost);
+            $nextThumbnailUrl = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
         ?>
         <div class="prev_next_box nav_next">
             <?php if ($nextPost) { ?>
