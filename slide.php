@@ -80,8 +80,11 @@ if ($midCenter) {
             $result = get_post_thumbnail($post);
             $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
             
+            // 使用Typecho的Widget获取文章对象
+            $postObj = Typecho_Widget::widget('Widget_Archive', array('cid' => $post['cid']));
+            
             // 输出HTML
-            echo '<a class="zt_list" href="' . $post['permalink'] . '" title="' . htmlspecialchars($post['title']) . '">';
+            echo '<a class="zt_list" href="' . $postObj->permalink . '" title="' . htmlspecialchars($post['title']) . '">';
             echo '<img src="' . $thumbnail . '" decoding="async" loading="lazy" class="post-images-c lazyload" data-src="' . $thumbnail . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
             echo '<h3>' . htmlspecialchars($post['title']) . '</h3>';
             echo '<b>' . htmlspecialchars($post['category_name']) . '</b>';
@@ -117,8 +120,11 @@ if ($midRight) {
         $result = get_post_thumbnail($rightPost);
         $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
         
+        // 使用Typecho的Widget获取文章对象
+        $postObj = Typecho_Widget::widget('Widget_Archive', array('cid' => $rightPost['cid']));
+        
         // 输出HTML
-        echo '<a class="gglb" href="' . $rightPost['permalink'] . '" title="' . htmlspecialchars($rightPost['title']) . '">';
+        echo '<a class="gglb" href="' . $postObj->permalink . '" title="' . htmlspecialchars($rightPost['title']) . '">';
         echo '<img src="' . $thumbnail . '" decoding="async" loading="lazy" class="post-images-r lazyload" data-src="' . $thumbnail . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
         echo '<div class="gg_txt">
                 <h3>' . htmlspecialchars($rightPost['title']) . '</h3>
