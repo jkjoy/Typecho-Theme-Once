@@ -52,51 +52,43 @@ if (!empty($slides)):
 // 获取设置中的分类ID
 $midCenter = $this->options->midCenter;
 $midRight = $this->options->midRight;
+
+// 获取数据库实例
+$db = Typecho_Db::get();
+
 // 中间展示（分类面板）
 if ($midCenter) {
-    // 手动获取分类下的文章
     $midCenterID = intval($midCenter);
-    $args = 'pageSize=5'; // 增加pageSize以便找到更多文章 
-    // 使用默认的文章列表部件，然后手动过滤特定分类的文章
-    $this->widget('Widget_Contents_Post_Recent', $args)->to($posts);
+    
+    // 直接从数据库获取指定分类的文章
+    $centerPosts = $db->fetchAll($db->select('table.contents.*, table.metas.name as category_name')
+        ->from('table.contents')
+        ->join('table.relationships', 'table.contents.cid = table.relationships.cid')
+        ->join('table.metas', 'table.relationships.mid = table.metas.mid')
+        ->where('table.relationships.mid = ?', $midCenterID)
+        ->where('table.contents.type = ?', 'post')
+        ->where('table.contents.status = ?', 'publish')
+        ->order('table.contents.created', Typecho_Db::SORT_DESC)
+        ->limit(2)
+    );
+
     echo '<div class="index_banner_center">';
-    $displayed = 0;
-    $scanned = 0; // 用于追踪扫描了多少文章
-    while ($posts->next()) {
-        $scanned++;
-        // 检查这篇文章是否属于指定分类
-        $inCategory = false;
-        $categoryName = '';
-        // 遍历文章的所有分类
-        if (!empty($posts->categories)) {
-            foreach ($posts->categories as $category) {
-                if ($category['mid'] == $midCenterID) {
-                    $inCategory = true;
-                    $categoryName = htmlspecialchars($category['name']);
-                    break;
-                }
-            }
-        }
-        // 如果文章属于指定分类，才显示
-        if ($inCategory) {
-            $displayed++;
+    
+    if (!empty($centerPosts)) {
+        foreach ($centerPosts as $post) {
             // 获取缩略图
-            $result = get_post_thumbnail($posts);
+            $result = get_post_thumbnail($post);
             $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
+            
             // 输出HTML
-            echo '<a class="zt_list" href="' . $posts->permalink . '" title="' . htmlspecialchars($posts->title) . '">';
-            echo '<img src="' . $thumbnail. '" decoding="async" loading="lazy" class="post-images-c lazyload" data-src="' . $thumbnail. '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" /><h3>' . htmlspecialchars($posts->title) . '</h3>';
-            echo '<b>' . $categoryName . '</b>';
+            echo '<a class="zt_list" href="' . $post['permalink'] . '" title="' . htmlspecialchars($post['title']) . '">';
+            echo '<img src="' . $thumbnail . '" decoding="async" loading="lazy" class="post-images-c lazyload" data-src="' . $thumbnail . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
+            echo '<h3>' . htmlspecialchars($post['title']) . '</h3>';
+            echo '<b>' . htmlspecialchars($post['category_name']) . '</b>';
             echo '</a>';
-            // 如果已经显示了两篇文章，就退出循环
-            if ($displayed >= 2) {
-                break;
-            }
         }
-    }
-    // 如果没有找到任何文章
-    if ($displayed == 0) {
-        echo '<div class="zt_list">没有找到分类文章 (扫描了' . $scanned . '篇文章)</div>';
+    } else {
+        echo '<div class="zt_list">没有找到分类文章</div>';
     }
     echo '</div>';
     echo '</div>';
@@ -104,54 +96,41 @@ if ($midCenter) {
 
 // 右边展示（分类面板）
 if ($midRight) {
-    // 手动获取分类下的文章
     $midRightID = intval($midRight);
-    $args = 'pageSize=10'; // 设置足够大的数量以便找到至少一篇符合条件的文章
-    // 使用独立实例获取文章列表，避免与上面的widget冲突
-    $this->widget('Widget_Contents_Post_Recent', $args)->to($rightPosts);
+    
+    // 直接从数据库获取指定分类的文章
+    $rightPost = $db->fetchRow($db->select('table.contents.*, table.metas.name as category_name')
+        ->from('table.contents')
+        ->join('table.relationships', 'table.contents.cid = table.relationships.cid')
+        ->join('table.metas', 'table.relationships.mid = table.metas.mid')
+        ->where('table.relationships.mid = ?', $midRightID)
+        ->where('table.contents.type = ?', 'post')
+        ->where('table.contents.status = ?', 'publish')
+        ->order('table.contents.created', Typecho_Db::SORT_DESC)
+        ->limit(1)
+    );
+
     echo '<div class="col-lg-3 none_992">';
-    $displayed = 0;
-    $scanned = 0; // 用于追踪扫描了多少文章
-    while ($rightPosts->next()) {
-        $scanned++;
-        // 检查这篇文章是否属于指定分类
-        $inCategory = false;
-        $categoryName = '';
-        // 遍历文章的所有分类
-        if (!empty($rightPosts->categories)) {
-            foreach ($rightPosts->categories as $category) {
-                if ($category['mid'] == $midRightID) {
-                    $inCategory = true;
-                    $categoryName = htmlspecialchars($category['name']);
-                    break;
-                }
-            }
-        }
-        // 如果文章属于指定分类，才显示
-        if ($inCategory) {
-            $displayed++;
-            // 获取缩略图（修复这里使用正确的文章对象）
-            $result = get_post_thumbnail($rightPosts);
-            $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
-            // 输出HTML
-            echo '<a class="gglb" href="' . $rightPosts->permalink . '" title="' . htmlspecialchars($rightPosts->title) . '">';
-            echo '<img src="' . $thumbnail . '" decoding="async" loading="lazy" class="post-images-r lazyload" data-src="' . $thumbnail . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
-            echo '<div class="gg_txt">
-                    <h3>' . htmlspecialchars($rightPosts->title) . '</h3>
-                    <p><i class="bi bi-clock"></i>' . date('Y-m-d', $rightPosts->created) . '</p>
-                  </div>
-                  <b>' . $categoryName . '</b></a>';
-            // 只显示一篇文章
-            break;
-        }
-    }
-    // 如果没有找到任何文章
-    if ($displayed == 0) {
-        echo '<div class="gglb">没有找到分类文章 (扫描了' . $scanned . '篇文章)</div>';
+    
+    if ($rightPost) {
+        // 获取缩略图
+        $result = get_post_thumbnail($rightPost);
+        $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
+        
+        // 输出HTML
+        echo '<a class="gglb" href="' . $rightPost['permalink'] . '" title="' . htmlspecialchars($rightPost['title']) . '">';
+        echo '<img src="' . $thumbnail . '" decoding="async" loading="lazy" class="post-images-r lazyload" data-src="' . $thumbnail . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
+        echo '<div class="gg_txt">
+                <h3>' . htmlspecialchars($rightPost['title']) . '</h3>
+                <p><i class="bi bi-clock"></i>' . date('Y-m-d', $rightPost['created']) . '</p>
+              </div>
+              <b>' . htmlspecialchars($rightPost['category_name']) . '</b></a>';
+    } else {
+        echo '<div class="gglb">没有找到分类文章</div>';
     }
     echo '</div>';
 }
-?>                                
+?>
     </div>
 </div>
 </section>

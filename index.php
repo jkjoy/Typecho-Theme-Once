@@ -6,10 +6,9 @@
  * 老孙移植
  * @package  Once 
  * @author 老孙
- * @version 1.0.0
+ * @version 1.0.1
  * @link http://www.imsun.org
  */
-
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 $this->need('header.php');
 ?>
