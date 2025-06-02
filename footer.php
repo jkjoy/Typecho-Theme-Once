@@ -15,9 +15,13 @@
     <div class="container">
         <div class="foot">
     	    <div class="copyright">
-                <p> &copy; <?php echo date('Y'); ?> <?php $this->options->title(); ?>.由<a href="https://typecho.org" rel="external nofollow" target="_blank" >Typecho</a>强力驱动.<?php _e('加载耗时'); ?><?php echo timer_stop();?> 
+                <p> &copy; <?php echo date('Y'); ?> <?php $this->options->title(); ?>.<?php _e('Page Loaded in'); ?><?php echo timer_stop();?> 
                 </p>
-                <p>Theme by <a href="https://huitheme.com" rel="external nofollow" target="_blank">HUiTHEME</a>&主题支持 by<a href="https://www.imsun.org" target="_blank">老孙</a>
+            <p>
+                Theme <a href="https://github.com/jkjoy/Typecho-Theme-Once" rel="external nofollow" target="_blank">Once</a> 
+                Design by <a href="https://huitheme.com" rel="external nofollow" target="_blank">HUiTHEME</a>
+                Made by<a href="https://www.imsun.org" target="_blank">Sun</a>
+                Powered by <a href="https://typecho.org" rel="external nofollow" target="_blank" >Typecho</a>
             </p>
             </div>
             <div class="foot_nav">
