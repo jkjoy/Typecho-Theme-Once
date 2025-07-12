@@ -4,6 +4,7 @@
 <head>
     <meta charset="<?php $this->options->charset(); ?>">
     <meta name="renderer" content="webkit">
+    <meta http-equiv="Cache-Control" content="max-age=86400" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title><?php $this->archiveTitle([
             'category' => _t('分类 %s 下的文章'),

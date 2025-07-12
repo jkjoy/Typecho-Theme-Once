@@ -14,9 +14,6 @@ function getPermalinkFromCoid($coid) {
         <div class="layoutSingleColumn">
             <?php $this->comments()->to($comments); ?>
             <?php 
-            $previousAuthor = isset($_COOKIE['__typecho_remember_author']) ? htmlspecialchars($_COOKIE['__typecho_remember_author']) : '';
-            $previousEmail = isset($_COOKIE['__typecho_remember_mail']) ? htmlspecialchars($_COOKIE['__typecho_remember_mail']) : '';
-            $previousUrl = isset($_COOKIE['__typecho_remember_url']) ? htmlspecialchars($_COOKIE['__typecho_remember_url']) : '';          
             $language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
             if($this->allow('comment') && stripos($language, 'zh') > -1): 
             ?>
@@ -61,7 +58,7 @@ function getPermalinkFromCoid($coid) {
                         <?php if ($comments->parent) {echo getPermalinkFromCoid($comments->parent);} $comments->content(); ?>
                     </div><!-- .comment-content -->
                     <div class="reply">
-                        <?php $comments->reply(); ?>
+                        <a rel="nofollow" class="comment-reply-link" href="javascript:void(0);" data-coid="<?php echo $comments->coid; ?>">回复</a>
                     </div>
                 </article><!-- .comment-body -->
                 <?php if ($comments->children) { ?>
@@ -119,18 +116,19 @@ function getPermalinkFromCoid($coid) {
                         </p>
                         <?php else: ?>
                         <p class="comment-form-author">
-                            <input placeholder="称呼 *" type="text" name="author" id="author" class="text" value="<?php echo $previousAuthor; ?>" required />
+                            <input placeholder="称呼 *" type="text" name="author" id="author" class="text" value="<?php echo isset($_COOKIE['__typecho_remember_author']) ? htmlspecialchars($_COOKIE['__typecho_remember_author']) : ''; ?>" required />
                         </p>
                         <p class="comment-form-email">
-                            <input placeholder="邮箱<?php if ($this->options->commentsRequireMail): ?> *<?php endif; ?>" type="email" name="mail" id="mail" class="text" value="<?php echo $previousEmail; ?>"<?php if ($this->options->commentsRequireMail): ?> required<?php endif; ?> />
+                            <input placeholder="邮箱<?php if ($this->options->commentsRequireMail): ?> *<?php endif; ?>" type="email" name="mail" id="mail" class="text" value="<?php echo isset($_COOKIE['__typecho_remember_mail']) ? htmlspecialchars($_COOKIE['__typecho_remember_mail']) : ''; ?>"<?php if ($this->options->commentsRequireMail): ?> required<?php endif; ?> />
                         </p>
                         <p class="comment-form-url">
-                            <input type="url" name="url" id="url" class="text" placeholder="http(s)://<?php if ($this->options->commentsRequireURL): ?> *<?php endif; ?>" value="<?php echo $previousUrl; ?>"<?php if ($this->options->commentsRequireURL): ?> required<?php endif; ?> />
+                            <input type="url" name="url" id="url" class="text" placeholder="http(s)://<?php if ($this->options->commentsRequireURL): ?> *<?php endif; ?>" value="<?php echo isset($_COOKIE['__typecho_remember_url']) ? htmlspecialchars($_COOKIE['__typecho_remember_url']) : ''; ?>"<?php if ($this->options->commentsRequireURL): ?> required<?php endif; ?> />
                         </p>
                         <?php endif; ?>                       
                         <p class="comment-form-comment">
                             <textarea rows="8" cols="50" name="text" id="textarea" class="textarea"  onkeydown="if(event.ctrlKey&&event.keyCode==13){document.getElementById('misubmit').click();return false};"  placeholder="雁过留声,人过留名"  required><?php $this->remember('text'); ?></textarea>
                         </p>
+                        <input type="hidden" name="parent" value="">
                         <p class="form-submit">
                             <button type="submit" class="submit" id="misubmit">提交评论</button>
                         </p>
@@ -200,13 +198,6 @@ function getCookie(name) {
 }
 // 页面加载时自动填充已保存的信息
 document.addEventListener('DOMContentLoaded', function() {
-    var author = document.getElementById('author');
-    var mail = document.getElementById('mail');
-    var url = document.getElementById('url');
-    // 自动填充表单
-    if (author) author.value = getCookie('__typecho_remember_author') || '';
-    if (mail) mail.value = getCookie('__typecho_remember_mail') || '';
-    if (url) url.value = getCookie('__typecho_remember_url') || '';  
     // 为评论添加过渡效果
     var comments = document.querySelectorAll('.comment-body');
     comments.forEach(function(comment) {
@@ -216,6 +207,42 @@ document.addEventListener('DOMContentLoaded', function() {
             comment.style.opacity = '1';
             comment.style.transform = 'translateY(0)';
         }, 100);
+    });
+});
+// 局部化评论回复表单
+document.addEventListener('DOMContentLoaded', function() {
+    var respond = document.getElementById('<?php $this->respondId(); ?>');
+    var cancelReply = respond.querySelector('#cancel-comment-reply-link') || respond.querySelector('.cancel-comment-reply');
+    var temp = document.createElement('div');
+    temp.id = 'respond-temp';
+    temp.style.display = 'none';
+    respond.parentNode.insertBefore(temp, respond);
+
+    // 委托事件，兼容多级评论
+    document.body.addEventListener('click', function(e) {
+        var target = e.target;
+        if (target.classList.contains('comment-reply-link')) {
+            e.preventDefault();
+            var commentId = target.getAttribute('data-coid') || '';
+            var comment = target.closest('.comment') || target.closest('li');
+            if (comment && respond) {
+                comment.appendChild(respond); // 移动表单
+                respond.scrollIntoView({behavior: "smooth", block: "center"});
+                var parentInput = respond.querySelector('input[name="parent"]');
+                if (parentInput) parentInput.value = commentId;
+                var textarea = respond.querySelector('textarea');
+                if (textarea) textarea.focus();
+            }
+            return false;
+        }
+        // 取消回复
+        if (target.id === 'cancel-comment-reply-link' || target.classList.contains('cancel-comment-reply')) {
+            e.preventDefault();
+            temp.parentNode.insertBefore(respond, temp);
+            var parentInput = respond.querySelector('input[name="parent"]');
+            if (parentInput) parentInput.value = '';
+            return false;
+        }
     });
 });
 </script>

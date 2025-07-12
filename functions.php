@@ -250,16 +250,6 @@ function get_post_thumbnail($post) {
                 $images[] = $img_url;
             }
         }
-        // Markdown
-        preg_match_all('/!\[([^\]]*)\]\(([^\)]+)\)/i', $content, $md_matches);
-        if (!empty($md_matches[2])) {
-            foreach ($md_matches[2] as $img_url) {
-                if (strpos($img_url, 'http') !== 0 && strpos($img_url, '//') !== 0) {
-                    $img_url = Helper::options()->siteUrl . ltrim($img_url, '/');
-                }
-                $images[] = $img_url;
-            }
-        }
         // URL直链
         preg_match_all('/(https?:\/\/[^\s<>\"\']*?\.(?:jpg|jpeg|png|gif|webp))(\?[^\s<>\"\']*)?/i', $content, $url_matches);
         if (!empty($url_matches[1])) {
