@@ -1,6 +1,6 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
 <?php $this->need('header.php'); ?>
-<div class="col-lg-8">
+<div class="col-lg-9">
     <div class="post_container_title">
 	    <h1><?php $this->title() ?></h1>
 	</div>
