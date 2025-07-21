@@ -372,126 +372,6 @@ function get_thumb($imgUrl, $options) {
     }
 }
 
-/**
- * 获取上一篇文章
- * 
- * @param Widget_Archive $archive 当前文章归档对象
- * @return object|null 上一篇文章对象，如果没有则返回null
- */
-function get_previous_post($archive) {
-    if (!$archive->is('single')) {
-        return null;
-    }
-    $db = Typecho_Db::get();
-    $prefix = $db->getPrefix();  
-    // 获取上一篇文章（按创建时间排序）
-    $post = $db->fetchRow($db->select()
-        ->from('table.contents')
-        ->where('table.contents.status = ?', 'publish')
-        ->where('table.contents.created < ?', $archive->created)
-        ->where('table.contents.type = ?', 'post')
-        ->order('table.contents.created', Typecho_Db::SORT_DESC)
-        ->limit(1));
-    
-    if (!$post) {
-        return null;
-    }  
-    // 构建标准化的文章对象
-    $result = new stdClass();
-    $result->cid = $post['cid'];
-    $result->title = $post['title'];
-    $result->slug = $post['slug'];
-    $result->created = $post['created'];
-    $result->content = isset($post['text']) ? $post['text'] : '';
-    $result->text = isset($post['text']) ? $post['text'] : '';
-    $result->permalink = get_permalink($post['cid']);    
-    // 获取文章自定义字段
-    $fields = $db->fetchAll($db->select()->from('table.fields')
-        ->where('cid = ?', $post['cid']));
-    // 添加自定义字段到文章对象
-    if ($fields) {
-        $result->fields = new stdClass();
-        foreach ($fields as $field) {
-            $result->fields->{$field['name']} = $field['str_value'] ? $field['str_value'] : $field['int_value'];
-        }
-    } 
-    return $result;
-}
-
-/**
- * 获取下一篇文章
- * 
- * @param Widget_Archive $archive 当前文章归档对象
- * @return object|null 下一篇文章对象，如果没有则返回null
- */
-function get_next_post($archive) {
-    if (!$archive->is('single')) {
-        return null;
-    }
-    $db = Typecho_Db::get();
-    $prefix = $db->getPrefix();
-    // 获取下一篇文章（按创建时间排序）
-    $post = $db->fetchRow($db->select()
-        ->from('table.contents')
-        ->where('table.contents.status = ?', 'publish')
-        ->where('table.contents.created > ?', $archive->created)
-        ->where('table.contents.type = ?', 'post')
-        ->order('table.contents.created', Typecho_Db::SORT_ASC)
-        ->limit(1));
-    if (!$post) {
-        return null;
-    }
-    // 构建标准化的文章对象
-    $result = new stdClass();
-    $result->cid = $post['cid'];
-    $result->title = $post['title'];
-    $result->slug = $post['slug'];
-    $result->created = $post['created'];
-    $result->content = isset($post['text']) ? $post['text'] : '';
-    $result->text = isset($post['text']) ? $post['text'] : '';
-    $result->permalink = get_permalink($post['cid']);
-    // 获取文章自定义字段
-    $fields = $db->fetchAll($db->select()->from('table.fields')
-        ->where('cid = ?', $post['cid']));
-    // 添加自定义字段到文章对象
-    if ($fields) {
-        $result->fields = new stdClass();
-        foreach ($fields as $field) {
-            $result->fields->{$field['name']} = $field['str_value'] ? $field['str_value'] : $field['int_value'];
-        }
-    }
-    return $result;
-}
-
-/**
- * 获取文章永久链接
- * 
- * @param int $cid 文章ID
- * @return string 文章链接
- */
-function get_permalink($cid) {
-    try {
-        // 获取文章对象
-        $db = Typecho_Db::get();
-        $post = $db->fetchRow($db->select()
-            ->from('table.contents')
-            ->where('cid = ?', $cid)
-            ->where('status = ?', 'publish'));   
-        if (!$post) {
-            return '';
-        }
-        // 构造文章对象
-        $post['type'] = 'post'; // 确保类型为文章
-        $post = Typecho_Widget::widget('Widget_Abstract_Contents')->filter($post);   
-        // 使用文章对象的 permalink 方法生成链接
-        return $post['permalink'];
-    } catch (Exception $e) {
-        // 出现异常时使用最简单的方式
-        $options = Helper::options();
-        return $options->siteUrl . '?cid=' . $cid;
-    }
-}
-
 /**    
  * 评论者认证等级 + 身份    
  *    
@@ -512,22 +392,14 @@ function commentApprove($widget, $email = NULL)
     );
     if (empty($email)) return $result;       
     $result['state'] = 1;
-    $master = array(      
-        '基友邮箱1@qq.com',
-        '基友邮箱1@qq.com'
-    );      
+
     if ($widget->authorId == $widget->ownerId) {      
         $result['isAuthor'] = 1;//」
         $result['userLevel'] = '「博主」<i class="bi bi-award-fill"></i>';
         $result['userDesc'] = '本站站长';
         $result['bgColor'] = '#FFD67A';
         $result['commentNum'] = 999;
-    } else if (in_array($email, $master)) {      
-        $result['userLevel'] = '「基友」';
-        $result['userDesc'] = '好基友';
-        $result['bgColor'] = '#65C186';
-        $result['commentNum'] = 888;
-    } else {
+    }  else {
         //数据库获取
         $db = Typecho_Db::get();
         //获取评论条数
