@@ -1,7 +1,12 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
+
 function themeConfig($form)
 {
+    echo '<style>.typecho-page-title h2 {font-weight: 600;color: #737373;}.typecho-page-title h2:before {content: "#";margin-right: 6px;color: #ff6d6d; font-size: 20px;font-weight: 600;}.themeConfig h3 {color: #737373;font-size: 20px;}.themeConfig h3:before {content: "[";margin-right: 5px;color: #ff6d6d;font-size: 25px;}.themeConfig h3:after {content: "]";margin-left: 5px;color: #ff6d6d;font-size: 25px;}.info{border: 1px solid #ffadad;padding: 20px;margin: -15px 10px 25px 0;background: #ffffff;border-radius: 5px;color: #ff6d6d;}</style>';
+    // 直接在主题设置页面调用更新检查
+    themeAutoUpgradeNotice();
+    echo '<span class="themeConfig"><h3>博客设置</h3></span>';
     $logoUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'logoUrl',
         null,
@@ -26,11 +31,25 @@ function themeConfig($form)
         _t('默认的文章缩略图地址')
     );    
     $form->addInput($thumbUrl); 
+    $darkMode = new Typecho_Widget_Helper_Form_Element_Radio(
+        'darkMode',
+        array(
+            'auto' => '自动切换',
+            'light' => '始终浅色',
+            'dark' => '始终深色'
+        ),
+        'auto',
+        '显示模式',
+        '选择站点外观模式。'
+    );
+    $form->addInput($darkMode);
+    $cnavatar = new Typecho_Widget_Helper_Form_Element_Text('cnavatar', NULL, NULL, _t('Gravatar镜像'), _t('默认https://cravatar.cn/avatar/'));
+    $form->addInput($cnavatar);
     $slidePosts = new Typecho_Widget_Helper_Form_Element_Text(
         'slidePosts',
         NULL,
         NULL,
-        _t('幻灯片文章'),
+        _t('<span class="themeConfig"><h3>Hero设置</h3></span>幻灯片文章'),
         _t('输入文章的 CID，多个请用英文逗号或空格分隔，如：1,2,3 或 1 2 3')
     );
     $form->addInput($slidePosts);   
@@ -40,9 +59,7 @@ function themeConfig($form)
         // 右边展示分类
     $midRight = new Typecho_Widget_Helper_Form_Element_Text('midRight', NULL, '', _t('右边展示分类'), _t('请输入分类的mid'));
     $form->addInput($midRight);
-    $cnavatar = new Typecho_Widget_Helper_Form_Element_Text('cnavatar', NULL, NULL, _t('Gravatar镜像'), _t('默认https://cravatar.cn/avatar/'));
-    $form->addInput($cnavatar);
-    $icpbeian = new Typecho_Widget_Helper_Form_Element_Text('icpbeian', NULL, NULL, _t('备案号码'), _t('不填写则不显示'));
+    $icpbeian = new Typecho_Widget_Helper_Form_Element_Text('icpbeian', NULL, NULL, _t('<span class="themeConfig"><h3>底部设置</h3></span>备案号码'), _t('不填写则不显示'));
     $form->addInput($icpbeian);
     $showlinks = new Typecho_Widget_Helper_Form_Element_Radio('showlinks', ['0' => _t('不显示'), '1' => _t('显示')], '0', _t('友情链接'), _t('是否显示首页友情链接'));
     $form->addInput($showlinks);
@@ -58,21 +75,9 @@ function themeConfig($form)
             'ShowOther'          => _t('显示其它杂项')
         ],
         ['ShowRecentPosts', 'ShowRecentComments', 'ShowHotPosts', 'ShowTags', 'ShowOther'],
-        _t('侧边栏显示')
+        _t('<span class="themeConfig"><h3>侧边栏设置</h3></span>侧边栏显示')
     );
     $form->addInput($sidebarBlock->multiMode());
-    $darkMode = new Typecho_Widget_Helper_Form_Element_Radio(
-        'darkMode',
-        array(
-            'auto' => '自动切换',
-            'light' => '始终浅色',
-            'dark' => '始终深色'
-        ),
-        'auto',
-        '显示模式',
-        '选择站点外观模式。'
-    );
-    $form->addInput($darkMode);
 }
 
 /**
@@ -681,5 +686,72 @@ class AttachmentHelper {
         });
         </script>
         <?php
+    }
+}
+/**
+ * 自动检查主题更新
+ */
+function themeAutoUpgradeNotice()
+{
+    // 1. 定义当前主题版本 
+    $current_version = '1.2.0';
+    // 2. 定义 GitHub API 地址
+    $api_url = 'https://api.github.com/repos/jkjoy/typecho-theme-once/releases/latest';
+    // 3. 设置缓存，避免每次请求都调用 API，减轻服务器压力
+    // 使用主题目录下的缓存文件，确保有写入权限
+    $cache_dir = __TYPECHO_ROOT_DIR__ . '/usr/cache';
+    $cache_file = $cache_dir . '/version.json';
+    $cache_time = 12 * 3600; // 缓存12小时
+    // 确保缓存目录存在
+    if (!file_exists($cache_dir)) {
+        @mkdir($cache_dir, 0755, true);
+    }
+    $latest_version = null;
+    // 检查缓存文件是否存在且未过期
+    if (file_exists($cache_file) && (time() - filemtime($cache_file)) < $cache_time) {
+        $cache_data = json_decode(file_get_contents($cache_file), true);
+        if ($cache_data && isset($cache_data['tag_name'])) {
+            $latest_version = $cache_data['tag_name'];
+        }
+    } else {
+        // 缓存过期或不存在，重新请求 API
+        $ctx = stream_context_create([
+            'http' => [
+                'header' => 'User-Agent: Typecho-Theme-Updater', // GitHub API 要求有 User-Agent
+                'timeout' => 10 // 设置超时时间
+            ]
+        ]);
+        $response = @file_get_contents($api_url, false, $ctx);
+        if ($response) {
+            $release_data = json_decode($response, true);
+            if (isset($release_data['tag_name'])) {
+                $latest_version = $release_data['tag_name'];
+                // 更新缓存文件
+                $result = file_put_contents($cache_file, json_encode(['tag_name' => $latest_version, 'time' => time()]));
+                // 如果缓存写入失败，记录错误但不影响显示
+                if (!$result) {
+                    error_log('Failed to write upgrade cache to ' . $cache_file);
+                }
+            }
+        } else {
+            // API请求失败，记录错误
+            error_log('Failed to fetch release data from ' . $api_url);
+            // 如果有旧缓存，使用旧缓存数据
+            if (file_exists($cache_file)) {
+                $cache_data = json_decode(file_get_contents($cache_file), true);
+                if ($cache_data && isset($cache_data['tag_name'])) {
+                    $latest_version = $cache_data['tag_name'];
+                }
+            }
+        }
+    }
+    if ($latest_version && version_compare($current_version, $latest_version, '<')) {
+        $notice_html = '
+        <span class="themeConfig"><h3>主题更新</h3>
+            <div class="info">发现新版本 ' . $latest_version . '，您当前使用的是 ' . $current_version . '。建议立即更新以获得最新功能和安全性修复。
+                <a href="https://github.com/jkjoy/typecho-theme-once/releases/latest" target="_blank">查看更新</a>
+                <a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">立即下载</a>
+            </div>';
+        echo $notice_html;
     }
 }
