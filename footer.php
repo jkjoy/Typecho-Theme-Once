@@ -15,7 +15,7 @@
     <div class="container">
         <div class="foot">
     	    <div class="copyright">
-                <p> &copy; <?php echo date('Y'); ?> <?php $this->options->title(); ?> . <?php _e('页面加载耗时 '); ?><?php echo timer_stop();?> 
+                <p> &copy; <?php echo date('Y'); ?> <?php $this->options->title(); ?> . Theme <a href="https://github.com/jkjoy/Typecho-Theme-Once" rel="external nofollow" target="_blank">Once</a>
                 </p>
             <p class="hidden">
                 Theme <a href="https://github.com/jkjoy/Typecho-Theme-Once" rel="external nofollow" target="_blank">Once</a> 
@@ -27,7 +27,7 @@
             <div class="foot_nav">
 				<nav class="dbdh">
                     <ul class="menu">
-                        <li class="menu-item"></li>
+                        <li class="menu-item"> </li>
                         <?php echo $this->options->tongji(); ?>
                     </ul>
                 </nav>	
@@ -39,9 +39,6 @@
     </div>
     <button class="scrollToTopBtn" title="返回顶部"><i class="bi bi-chevron-up"></i></button>   
 </footer>
-<?php if ($this->options->tongji): ?>
-<?php echo $this->options->tongji(); ?>
-<?php endif; ?>
 <!-- end #footer -->
 <?php $this->footer(); ?>
 <script type="text/javascript" src="<?php $this->options->themeUrl('assets/js/main.js'); ?>"></script>
