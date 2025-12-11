@@ -6,10 +6,21 @@
 <section class="links mobile_none">
     <div class="container">
         <span>友情链接：</span>
-        <?php Links_Plugin::output('<a href="{url}" target="_blank" rel="me noopener" title="{title}">{name}</a>'); ?>        
+        <?php
+        try {
+            // 检查links表是否存在
+            $db = Typecho_Db::get();
+            $db->fetchAll($db->select()->from('table.links')->limit(1));
+            // 如果没有异常，表存在，输出友情链接
+            Links_Plugin::output('<a href="{url}" target="_blank" rel="me noopener" title="{title}">{name}</a>');
+        } catch (Exception $e) {
+            // 表不存在或查询失败，显示提示信息
+            echo '<span style="color: #999;">请先安装links插件</span>';
+        }
+        ?>
     </div>
 </section>
-<?php endif; ?>  
+<?php endif; ?>
 <footer class="footer">
 <div class="footbox">
     <div class="container">

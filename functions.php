@@ -425,9 +425,16 @@ function commentApprove($widget, $email = NULL)
             ->from('table.comments')
             ->where('mail = ?', $email));
         $commentNum = $commentNumSql[0]['commentNum'];    
-        //获取友情链接
-        $linkSql = $db->fetchAll($db->select()->from('table.links')
-            ->where('user = ?',$email));       
+        //获取友情链接 - 检查表是否存在
+        $linkSql = null;
+        try {
+            // 尝试直接查询表，如果表不存在会抛出异常
+            $linkSql = $db->fetchAll($db->select()->from('table.links')
+                ->where('user = ?', $email));
+        } catch (Exception $e) {
+            // 如果表不存在或查询失败，忽略错误，继续执行
+            $linkSql = null;
+        }
         //等级判定
         if($commentNum==1){
             $result['userLevel'] = '「初见」<i class="bi bi-0-circle"></i>';
