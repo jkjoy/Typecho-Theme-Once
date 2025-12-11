@@ -59,11 +59,33 @@ $(document).ready(function(){
   }
 
   // 显示提示消息
-  function showToast(message) {
-      // 这里可以使用您喜欢的提示方式，例如alert或自定义toast
-      alert(message);
-      // 或者使用自定义toast组件：
-      // $('.toast-message').text(message).fadeIn().delay(2000).fadeOut();
+  function showToast(message, type = 'info') {
+      // 创建toast容器（如果不存在）
+      if (!$('.toast-container').length) {
+          $('body').append('<div class="toast-container"></div>');
+      }
+      
+      // 创建唯一的toast ID
+      const toastId = 'toast-' + Date.now();
+      
+      // 创建toast元素
+      const toastHtml = `<div id="${toastId}" class="toast ${type}">${message}</div>`;
+      
+      // 添加toast到容器
+      $('.toast-container').append(toastHtml);
+      
+      // 显示toast（添加show类触发动画）
+      setTimeout(() => {
+          $(`#${toastId}`).addClass('show');
+      }, 10);
+      
+      // 3秒后自动隐藏并移除toast
+      setTimeout(() => {
+          $(`#${toastId}`).removeClass('show');
+          setTimeout(() => {
+              $(`#${toastId}`).remove();
+          }, 300);
+      }, 3000);
   }
 
   // 使用事件委托处理点赞
@@ -74,7 +96,7 @@ $(document).ready(function(){
       
       // 检查是否已经点赞
       if(checkLikeCookie(cid)) {
-          showToast('请勿重复点赞');
+          showToast('请勿重复点赞', 'warning');
           return false;
       }
       
@@ -94,7 +116,7 @@ $(document).ready(function(){
           },
           success: function(data){
               if(data === 'already_liked') {
-                  showToast('请勿重复点赞');
+                  showToast('请勿重复点赞', 'warning');
                   // 确保UI状态一致
                   $this.addClass('done');
                   setLikeCookie(cid);
@@ -112,7 +134,7 @@ $(document).ready(function(){
               $this.removeClass('loading');
           },
           error: function() {
-              showToast('点赞失败，请重试');
+              showToast('点赞失败，请重试', 'error');
           }
       });
       

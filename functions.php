@@ -3,7 +3,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 
 function themeConfig($form)
 {
-    echo '<style>.typecho-page-title h2 {font-weight: 600;color: #737373;}.typecho-page-title h2:before {content: "#";margin-right: 6px;color: #ff6d6d; font-size: 20px;font-weight: 600;}.themeConfig h3 {color: #737373;font-size: 20px;}.themeConfig h3:before {content: "[";margin-right: 5px;color: #ff6d6d;font-size: 25px;}.themeConfig h3:after {content: "]";margin-left: 5px;color: #ff6d6d;font-size: 25px;}.info{border: 1px solid #ffadad;padding: 20px;margin: -15px 10px 25px 0;background: #ffffff;border-radius: 5px;color: #ff6d6d;}</style>';
+    echo '<style>.typecho-page-title h2 {font-weight: 600;color: #737373;}.typecho-page-title h2:before {content: "#";margin-right: 6px;color:#00b2ff; font-size: 20px;font-weight: 600;}.themeConfig h3 {color: #737373;font-size: 20px;}.themeConfig h3:before {content: "[";margin-right: 5px;color:#00b2ff;font-size: 25px;}.themeConfig h3:after {content: "]";margin-left: 5px;color: #00b2ff;font-size: 25px;}.info{border: 1px solid #4d75b3;padding: 20px;margin: -15px 10px 25px 0;background: #ffffff;border-radius: 5px;color: #0984E3;}.info a{color: #ff004c;}</style>';
     // 直接在主题设置页面调用更新检查
     themeAutoUpgradeNotice();
     echo '<span class="themeConfig"><h3>博客设置</h3></span>';
@@ -49,21 +49,19 @@ function themeConfig($form)
         'slidePosts',
         NULL,
         NULL,
-        _t('<span class="themeConfig"><h3>Hero设置</h3></span>幻灯片文章'),
+        _t('<span class="themeConfig"><h3>Hero设置</h3></span><div class="info">图文推荐展示设置</div>幻灯片文章'),
         _t('输入文章的 CID，多个请用英文逗号或空格分隔，如：1,2,3 或 1 2 3')
     );
     $form->addInput($slidePosts);   
-        // 中间展示分类
-    $midCenter = new Typecho_Widget_Helper_Form_Element_Text('midCenter', NULL, '', _t('中间展示分类'), _t('请输入分类的mid'));
+    $midCenter = new Typecho_Widget_Helper_Form_Element_Text('midCenter', NULL, '', _t('中间展示分类,填写两个分类mid,用英文逗号或空格分隔'), _t('请输入分类的mid'));
     $form->addInput($midCenter);
-        // 右边展示分类
-    $midRight = new Typecho_Widget_Helper_Form_Element_Text('midRight', NULL, '', _t('右边展示分类'), _t('请输入分类的mid'));
+    $midRight = new Typecho_Widget_Helper_Form_Element_Text('midRight', NULL, '', _t('右边展示分类,填写一个分类mid'), _t('请输入分类的mid'));
     $form->addInput($midRight);
-    $icpbeian = new Typecho_Widget_Helper_Form_Element_Text('icpbeian', NULL, NULL, _t('<span class="themeConfig"><h3>底部设置</h3></span>备案号码'), _t('不填写则不显示'));
+    $icpbeian = new Typecho_Widget_Helper_Form_Element_Text('icpbeian', NULL, NULL, _t('<span class="themeConfig"><h3>底部设置</h3></span><div class="info">个性化设置</div>备案号码'), _t('不填写则不显示'));
     $form->addInput($icpbeian);
-    $showlinks = new Typecho_Widget_Helper_Form_Element_Radio('showlinks', ['0' => _t('不显示'), '1' => _t('显示')], '0', _t('友情链接'), _t('是否显示首页友情链接'));
+    $showlinks = new Typecho_Widget_Helper_Form_Element_Radio('showlinks', ['0' => _t('不显示'), '1' => _t('显示')], '0', _t('选择<b>显示</b>前请先启用links插件. 友情链接'), _t('是否显示首页友情链接'));
     $form->addInput($showlinks);
-    $tongji = new Typecho_Widget_Helper_Form_Element_Textarea('tongji', NULL, NULL, _t('Footer代码'), _t('在footer中插入代码支持HTML'));
+    $tongji = new Typecho_Widget_Helper_Form_Element_Textarea('tongji', NULL, '<li><a href="/">首页</a></li>', _t('Footer代码'), _t('支持HTML'));
     $form->addInput($tongji);
     $sidebarBlock = new \Typecho\Widget\Helper\Form\Element\Checkbox(
         'sidebarBlock',
@@ -694,7 +692,7 @@ class AttachmentHelper {
 function themeAutoUpgradeNotice()
 {
     // 1. 定义当前主题版本 
-    $current_version = '1.2.0';
+    $current_version = '1.3.0';
     // 2. 定义 GitHub API 地址
     $api_url = 'https://api.github.com/repos/jkjoy/typecho-theme-once/releases/latest';
     // 3. 设置缓存，避免每次请求都调用 API，减轻服务器压力
@@ -753,5 +751,25 @@ function themeAutoUpgradeNotice()
                 <a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">立即下载</a>
             </div>';
         echo $notice_html;
+    }
+}
+
+Typecho_Plugin::factory('admin/write-post.php')->bottom = array('tagshelper', 'tagslist');
+class tagshelper{
+    public static function tagslist(){   
+?><style>.tagshelper a{cursor: pointer; padding: 0px 6px; margin: 2px 0;display: inline-block;border-radius: 2px;text-decoration: none;}
+.tagshelper a:hover{background: #ccc;color: #fff;}
+</style>
+<script> $(document).ready(function(){
+    $('#tags').after('<div style="margin-top: 35px;" class="tagshelper"><ul style="list-style: none;border: 1px solid #D9D9D6;padding: 6px 12px; max-height: 240px;overflow: auto;background-color: #FFF;border-radius: 2px;"><?php
+$i=0;
+Typecho_Widget::widget('Widget_Metas_Tag_Cloud', 'sort=count&desc=1&limit=200')->to($tags);
+while ($tags->next()) {
+echo "<a id=".$i." onclick=\"$(\'#tags\').tokenInput(\'add\', {id: \'".$tags->name."\', tags: \'".$tags->name."\'});\">".$tags->name."</a>";
+$i++;
+}
+?></ul></div>');
+  });</script>
+<?php
     }
 }

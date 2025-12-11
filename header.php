@@ -129,28 +129,22 @@
 		<div class="top">
 			<button class="mobile_an" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobile_right_nav" aria-controls="mobile_right_nav"><i class="bi bi-list"></i></button>
 			<div class="top_l">
-            	<h1 class="logo">
-                <?php if ($this->options->logoUrl): ?>
-                    <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><img src="<?php $this->options->logoUrl() ?>"><b><?php $this->options->title() ?></b></a>
-                <?php else: ?>
-                    <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><b><?php $this->options->title() ?></b></a>
-	        	<?php endif; ?>
-                </h1>
+          <h1 class="logo">
+            <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><?php if ($this->options->logoUrl): ?><img src="<?php $this->options->logoUrl() ?>"><?php else: ?><?php endif; ?><b><?php $this->options->title() ?></b></a>
+          </h1>
         		<nav class="header-menu">
-                    <ul id="menu-menu-1" class="header-menu-ul">
-                    <li id="menu-item-13" class="menu-item menu-item-type-custom menu-item-object-custom current-menu-item current_page_item menu-item-home menu-item-13">
+                    <ul id="menu" class="header-menu-ul">
+                    <li id="menu" class="menu-itemcurrent-menu-item current_page_item menu-item-home">
                         <a<?php if ($this->is('index')): ?> class="current"<?php endif; ?> href="<?php $this->options->siteUrl(); ?>">
-                        <?php _e('<i class="bi bi-house-door-fill me-1"></i>首页'); ?>
+                        <i class="bi bi-house-door-fill me-1"></i><?php _e('首页'); ?>
                         </a>
                     </li>
                     <li class="menu-item-has-children">
-                        <a href="#" title="分类">
-                        <i class="bi bi-folder-fill me-1"></i>分类
-                        </a>
+                        <a href="javascript:void(0);"><i class="bi bi-folder-fill me-1"></i><?php _e('分类'); ?></a>
                         <ul class="sub-menu" style="display: none;">
                         <?php $categories = Typecho_Widget::widget('Widget_Metas_Category_List'); ?>
                         <?php while($categories->next()): ?>
-                        <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-28">
+                        <li class="menu-item">
                             <a href="<?php $categories->permalink(); ?>">
                             <?php 
                             switch($categories->slug) {
@@ -198,7 +192,7 @@
                         </li>
                     <?php $this->widget('Widget_Contents_Page_List')->to($pages); ?>
                         <?php while($pages->next()): ?>
-                        <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-28">
+                        <li class="menu-item">
                              <a href="<?php $pages->permalink(); ?>">
                              <?php echo pageIcon($pages->slug, $pages->title); ?>
                             </a>

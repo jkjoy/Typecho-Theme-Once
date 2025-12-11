@@ -500,3 +500,71 @@ img{border:0;max-width:100%;height:auto;}
 }
 .nopic_des{position:fixed;width:100%;height:100%;background:#ffffff;top:0px;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:20px;text-align:center;line-height:2;}
 .nopic_des a{background:#3556f3;margin-top:20px;padding:8px 45px;font-size:16px;color:#fff;}
+.hidden{display:none;}
+
+/* Toast 通知样式 */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.toast {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    min-width: 250px;
+    max-width: 350px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast.success {
+    background-color: rgba(40, 167, 69, 0.9);
+}
+
+.toast.error {
+    background-color: rgba(220, 53, 69, 0.9);
+}
+
+.toast.info {
+    background-color: rgba(23, 162, 184, 0.9);
+}
+
+.toast.warning {
+    background-color: rgba(255, 193, 7, 0.9);
+}
+
+/* 暗色模式下的toast样式 */
+.dark .toast {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #333;
+}
+
+.dark .toast.success {
+    background-color: rgba(40, 167, 69, 0.9);
+}
+
+.dark .toast.error {
+    background-color: rgba(220, 53, 69, 0.9);
+}
+
+.dark .toast.info {
+    background-color: rgba(23, 162, 184, 0.9);
+}
+
+.dark .toast.warning {
+    background-color: rgba(255, 193, 7, 0.9);
+}
