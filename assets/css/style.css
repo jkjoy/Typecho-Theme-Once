@@ -1,10 +1,5 @@
 /*
 Theme Name: once
-Theme URI: http://www.huitheme.com
-Description: Crazy uncle
-Author: Crazy uncle
-Author URI: http://www.huitheme.com
-Version: 1.6.202301041836
 */
 @charset "UTF-8";
 body{font-family:PingFang SC,Microsoft YaHei,Helvetica Neue,Helvetica,Arial,sans-serif;color:#333;font-size:14px;background-color:#f7f7f7;background-image:var(--ds_background);background-attachment:fixed;}
@@ -32,6 +27,8 @@ img{border:0;max-width:100%;height:auto;}
 .dark .top .top_r .top_r_an.theme-switch{color:#ffc008;background:#212121;}
 .dark .top .top_r .top_r_an:hover{background:#212121;}
 .dark body{background-color:#212121;color:#c9c9c9;background-blend-mode:overlay;}
+.dark .top .top_l .logo a img{background-color:#333;}
+.dark #mobile_right_nav .mobile_head .mobile_head_logo img{background-color:#333;}
 .dark a{color:#ffffff;}
 .dark .header{background:#191919;}
 .dark .top .top_r .top_r_an{color:#bdbdbd;}
@@ -96,9 +93,10 @@ img{border:0;max-width:100%;height:auto;}
 .header{background:#fff;width:100%;z-index:10;padding:16px 0px;margin-bottom:1.5rem;box-shadow:0px 1px 20px 12px #0808080f;}
 .top{display:flex;justify-content:space-between;align-items:center;}
 .top .top_l{display:flex;align-items:center;}
-.top .top_l .logo{margin-bottom:0px;font-size:20px;margin-right:25px;}
+.top .top_l .logo{margin-bottom:0px;font-size:20px;margin-right:25px;min-height:30px;}
 .top .top_l .logo a{display:flex;align-items:center;}
-.top .top_l .logo a img{height:30px;margin-right:10px;}
+.top .top_l .logo a img{height:30px;width:30px;margin-right:10px;opacity:0;transition:opacity 0.3s ease;background-color:#f0f0f0;border-radius:4px;}
+.top .top_l .logo a img.loaded{opacity:1;}
 .top .top_l .logo a b{letter-spacing:0.5px;}
 .top .top_r{}
 .top .top_r .top_r_an{border:none;color:#555;background:none;width:30px;height:30px;border-radius:50%;display:inline-block;text-align:center;line-height:30px;padding:0;cursor:pointer;}
@@ -106,7 +104,7 @@ img{border:0;max-width:100%;height:auto;}
 .top .top_r .top_r_an:hover{background:#e9e9e9;}
 .top .top_r .top_r_an i{}
 @media (max-width:768px){
-    .top .top_l .logo{margin-right:0px;}
+    .top .top_l .logo{margin-right:0px;min-height:22px;}
     .top .top_l .logo a img{height:22px;}
     .top .top_r .top_r_an.theme-switch{display:none;}
 }
@@ -135,7 +133,8 @@ img{border:0;max-width:100%;height:auto;}
 #mobile_right_nav{width:300px;border:none;}
 #mobile_right_nav .mobile_head{padding:15px 22px;color:#fff;background:rgba(0,0,0,0.2);display:flex;justify-content:space-between;}
 #mobile_right_nav .mobile_head .mobile_head_logo{display:flex;align-items:center;color:#333;justify-content:center;}
-#mobile_right_nav .mobile_head .mobile_head_logo img{height:28px;margin-right:10px;}
+#mobile_right_nav .mobile_head .mobile_head_logo img{height:28px;width:28px;margin-right:10px;opacity:0;transition:opacity 0.3s ease;background-color:#f0f0f0;border-radius:4px;}
+#mobile_right_nav .mobile_head .mobile_head_logo img.loaded{opacity:1;}
 #mobile_right_nav .mobile_head .mobile_head_logo b{}
 #mobile_right_nav .mobile_head .theme-switch{color:#333;background:#fff;width:30px;height:30px;border-radius:50%;border:none;text-align:center;display:flex;align-items:center;justify-content:center;font-size:12px;}
 #mobile_right_nav .menu-zk{margin:20px;background:#ebebeb;border-radius:8px;overflow:hidden;}

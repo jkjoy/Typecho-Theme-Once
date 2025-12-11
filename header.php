@@ -13,6 +13,10 @@
             'author'   => _t('%s 发布的文章')
         ], '', ' - '); ?><?php $this->options->title(); ?> | <?php $this->options->description(); ?></title>
     <link rel='icon' href='<?php $this->options->faviconUrl(); ?>' type='image/x-icon' />
+    <!-- 预加载logo图片 -->
+    <?php if ($this->options->logoUrl): ?>
+    <link rel="preload" href="<?php $this->options->logoUrl(); ?>" as="image">
+    <?php endif; ?>
     <!-- 使用url函数转换相关路径 -->
     <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/bootstrap.min.css'); ?>">
     <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/bifont/bootstrap-icons.css'); ?>">
@@ -130,7 +134,12 @@
 			<button class="mobile_an" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobile_right_nav" aria-controls="mobile_right_nav"><i class="bi bi-list"></i></button>
 			<div class="top_l">
           <h1 class="logo">
-            <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><?php if ($this->options->logoUrl): ?><img src="<?php $this->options->logoUrl() ?>"><?php else: ?><?php endif; ?><b><?php $this->options->title() ?></b></a>
+            <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>">
+                <?php if ($this->options->logoUrl): ?>
+                <img src="<?php $this->options->logoUrl() ?>" onload="this.classList.add('loaded')">
+                <?php endif; ?>
+                <b><?php $this->options->title() ?></b>
+            </a>
           </h1>
         		<nav class="header-menu">
                     <ul id="menu" class="header-menu-ul">
@@ -232,12 +241,12 @@
 <div class="offcanvas offcanvas-start" tabindex="-1" id="mobile_right_nav" aria-labelledby="mobile_right_navLabel">
 	<div class="mobile_head">
 		<div class="mobile_head_logo">
-                <?php if ($this->options->logoUrl): ?>
-                    <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><img src="<?php $this->options->logoUrl() ?>"><b><?php $this->options->title() ?></b></a>
-                <?php else: ?>
-                    <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><b><?php $this->options->title() ?></b></a>
-	        	<?php endif; ?>
-        </div>
+		              <?php if ($this->options->logoUrl): ?>
+		                  <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><img src="<?php $this->options->logoUrl() ?>" onload="this.classList.add('loaded')"><b><?php $this->options->title() ?></b></a>
+		              <?php else: ?>
+		                  <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><b><?php $this->options->title() ?></b></a>
+		       	<?php endif; ?>
+		      </div>
 		<div class="theme-switch" onclick="switchDarkMode()"><i class="bi bi-lightbulb-fill"></i></div>
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
 	</div>
