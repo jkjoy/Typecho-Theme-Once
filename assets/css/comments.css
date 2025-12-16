@@ -109,6 +109,8 @@
     #comments .comment-list li .comment-body .comment-content p {
         line-height: 24px;
         margin-bottom: 0px;
+        overflow-wrap: break-word;
+        white-space: pre-wrap;
     }
     
     #comments .comment-list li .comment-body .reply {
