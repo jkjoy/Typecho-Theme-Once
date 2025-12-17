@@ -871,7 +871,7 @@ function themeAutoUpgradeNotice()
         return;
     }
 
-    echo '<div class="info">当前已是最新版本（本地：' . $current_version . '，GitHub：' . $latest_version . '）。'
+    echo '<div class="info">当前已是最新版本（当前版本：' . $current_version . '，GitHub版本：' . $latest_version . '）。'
         . '<a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">查看 releases</a>'
         . '</div>';
 }

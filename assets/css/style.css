@@ -441,12 +441,59 @@ img{border:0;max-width:100%;height:auto;}
 .wznrys h4,
 .wznrys h5,
 .wznrys h6{margin-bottom:25px;margin-top:0px;line-height:30px;}
+.wznrys h1:hover, 
+.wznrys h2:hover, 
+.wznrys h3:hover, 
+.wznrys h4:hover, 
+.wznrys h5:hover, 
+.wznrys h6:hover {color: inherit;}
 .wznrys h1{font-size:22px;}
 .wznrys h2{font-size:20px;}
 .wznrys h3{font-size:18px;}
 .wznrys h4{font-size:16px;}
 .wznrys h5{font-size:14px;}
 .wznrys h6{font-size:14px;}
+/* headings (simple & elegant) */
+.wznrys h1,
+.wznrys h2,
+.wznrys h3,
+.wznrys h4,
+.wznrys h5,
+.wznrys h6{margin:32px 0px 14px 0px;line-height:1.35;text-align:left;font-weight:600;letter-spacing:.1px;color:#111827;scroll-margin-top:96px;}
+.wznrys > h1:first-child,
+.wznrys > h2:first-child,
+.wznrys > h3:first-child,
+.wznrys > h4:first-child,
+.wznrys > h5:first-child,
+.wznrys > h6:first-child{margin-top:0px;}
+.wznrys h1{font-size:28px;letter-spacing:.2px;}
+.wznrys h2{font-size:22px;padding-bottom:10px;border-bottom:1px solid rgba(0,0,0,.06);}
+.wznrys h3{font-size:18px;position:relative;padding-left:12px;}
+.wznrys h3:before{content:'';position:absolute;left:0;top:.9em;transform:translateY(-50%);width:4px;height:1em;border-radius:3px;background:linear-gradient(to top,#6598ff,#0a59f8);}
+.wznrys h4{font-size:16px;color:#1f2937;position:relative;padding-left:12px;}
+.wznrys h4:before{content:'';position:absolute;left:0;top:.9em;transform:translateY(-50%);width:4px;height:1em;border-radius:3px;background:rgba(66,112,246,.35);}
+.wznrys h5{font-size:14px;color:#374151;}
+.wznrys h6{font-size:13px;color:#6b7280;font-weight:600;}
+.wznrys h1 a,
+.wznrys h2 a,
+.wznrys h3 a,
+.wznrys h4 a,
+.wznrys h5 a,
+.wznrys h6 a{color:inherit;text-decoration:none;border:none;}
+.dark .wznrys h1,
+.dark .wznrys h2,
+.dark .wznrys h3,
+.dark .wznrys h4,
+.dark .wznrys h5,
+.dark .wznrys h6{color:#e6edf3;}
+.dark .wznrys h2{border-bottom:1px solid rgba(255,255,255,.10);}
+.dark .wznrys h4{color:#c9d1d9;}
+.dark .wznrys h6{color:#9aa4b2;}
+.dark .wznrys h4:before{background:rgba(66,112,246,.45);}
+@media (max-width:768px){
+    .wznrys h1{font-size:24px;}
+    .wznrys h2{font-size:20px;}
+}
 .wznrys ol,
 .wznrys ul{margin-bottom:30px;list-style:disc;}
 .wznrys ol li,
