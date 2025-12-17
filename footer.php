@@ -52,6 +52,5 @@
 </footer>
 <!-- end #footer -->
 <?php $this->footer(); ?>
-<script type="text/javascript" src="<?php $this->options->themeUrl('assets/js/main.js'); ?>"></script>
 </body>
 </html>

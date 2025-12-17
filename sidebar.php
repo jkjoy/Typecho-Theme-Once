@@ -204,7 +204,7 @@ $sidebarBlock = !empty($this->options->sidebarBlock) ? (array)$this->options->si
     <aside id="comments-3" class="widget widget_comments">
         <h3 class="widget-title"><?php _e('最近回复'); ?></h3>
         <ul class="widget_comment_ul">
-        <?php $comments = \Widget\Comments\Recent::alloc(); ?>
+        <?php $comments = \Widget\Comments\Recent::alloc(array('ignoreAuthor' => true)); ?>
             <?php while ($comments->next()): ?>
                 <li>
                 <?php echo $comments->gravatar('40', ''); ?>

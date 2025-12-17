@@ -698,20 +698,28 @@ class AttachmentHelper {
  */
 function themeAutoUpgradeNotice()
 {
-    // 1. 定义当前主题版本 
-    $current_version = '1.3.0';
+    // 1. 获取当前主题版本（优先读取 index.php 的 @version 注释）
+    $current_version = '0.0.0';
+    $index_file = __DIR__ . '/index.php';
+    if (is_readable($index_file)) {
+        $index_content = @file_get_contents($index_file);
+        if ($index_content && preg_match('/@version\\s+([0-9]+(?:\\.[0-9]+)*)/i', $index_content, $m)) {
+            $current_version = $m[1];
+        }
+    }
     // 2. 定义 GitHub API 地址
     $api_url = 'https://api.github.com/repos/jkjoy/typecho-theme-once/releases/latest';
     // 3. 设置缓存，避免每次请求都调用 API，减轻服务器压力
-    // 使用主题目录下的缓存文件，确保有写入权限
     $cache_dir = __TYPECHO_ROOT_DIR__ . '/usr/cache';
-    $cache_file = $cache_dir . '/version.json';
+    $cache_file = $cache_dir . '/once-version.json';
     $cache_time = 12 * 3600; // 缓存12小时
     // 确保缓存目录存在
     if (!file_exists($cache_dir)) {
         @mkdir($cache_dir, 0755, true);
     }
     $latest_version = null;
+    $latest_version_raw = null;
+    $fetch_error = null;
     // 检查缓存文件是否存在且未过期
     if (file_exists($cache_file) && (time() - filemtime($cache_file)) < $cache_time) {
         $cache_data = json_decode(file_get_contents($cache_file), true);
@@ -730,7 +738,8 @@ function themeAutoUpgradeNotice()
         if ($response) {
             $release_data = json_decode($response, true);
             if (isset($release_data['tag_name'])) {
-                $latest_version = $release_data['tag_name'];
+                $latest_version_raw = $release_data['tag_name'];
+                $latest_version = ltrim(trim((string)$latest_version_raw), "vV");
                 // 更新缓存文件
                 $result = file_put_contents($cache_file, json_encode(['tag_name' => $latest_version, 'time' => time()]));
                 // 如果缓存写入失败，记录错误但不影响显示
@@ -740,7 +749,8 @@ function themeAutoUpgradeNotice()
             }
         } else {
             // API请求失败，记录错误
-            error_log('Failed to fetch release data from ' . $api_url);
+            $fetch_error = 'Failed to fetch release data from ' . $api_url;
+            error_log($fetch_error);
             // 如果有旧缓存，使用旧缓存数据
             if (file_exists($cache_file)) {
                 $cache_data = json_decode(file_get_contents($cache_file), true);
@@ -750,15 +760,33 @@ function themeAutoUpgradeNotice()
             }
         }
     }
-    if ($latest_version && version_compare($current_version, $latest_version, '<')) {
-        $notice_html = '
-        <span class="themeConfig"><h3>主题更新</h3>
-            <div class="info">发现新版本 ' . $latest_version . '，您当前使用的是 ' . $current_version . '。建议立即更新以获得最新功能和安全性修复。
-                <a href="https://github.com/jkjoy/typecho-theme-once/releases/latest" target="_blank">查看更新</a>
-                <a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">立即下载</a>
-            </div>';
-        echo $notice_html;
+
+    // 兼容缓存中可能存在的 v 前缀
+    if ($latest_version) {
+        $latest_version = ltrim(trim((string)$latest_version), "vV");
     }
+
+    // 4. 输出检查结果（无更新也给出状态，避免误以为“不可用”）
+    echo '<span class="themeConfig"><h3>主题更新</h3></span>';
+    if (!$latest_version) {
+        echo '<div class="info">更新检查失败：无法获取 GitHub 最新版本。'
+            . (ini_get('allow_url_fopen') ? '' : '（当前 PHP 已关闭 allow_url_fopen）')
+            . '<br>你可以手动前往：<a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">releases</a></div>';
+        return;
+    }
+
+    if (version_compare($current_version, $latest_version, '<')) {
+        echo '<div class="info">发现新版本 ' . $latest_version . '，您当前使用的是 ' . $current_version . '。'
+            . '建议立即更新以获得最新功能和安全性修复。'
+            . '<a href="https://github.com/jkjoy/typecho-theme-once/releases/latest" target="_blank">查看更新</a>'
+            . '<a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">立即下载</a>'
+            . '</div>';
+        return;
+    }
+
+    echo '<div class="info">当前已是最新版本（本地：' . $current_version . '，GitHub：' . $latest_version . '）。'
+        . '<a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">查看 releases</a>'
+        . '</div>';
 }
 
 Typecho_Plugin::factory('admin/write-post.php')->bottom = array('tagshelper', 'tagslist');

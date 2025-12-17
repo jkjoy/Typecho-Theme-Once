@@ -26,7 +26,9 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
         foreach ($posts as $post) {
             // 处理文章数据
             $permalink = \Typecho\Router::url('post', $post, $this->options->index);
-            $title = htmlspecialchars($post['title']);
+            $charset = Helper::options()->charset ? Helper::options()->charset : 'UTF-8';
+            $titleDecoded = html_entity_decode((string)$post['title'], ENT_QUOTES | ENT_HTML5, $charset);
+            $title = htmlspecialchars($titleDecoded, ENT_QUOTES | ENT_SUBSTITUTE, $charset);
             $created = $post['created'];
             // 获取年月日
             $postYear = date('Y', $created);

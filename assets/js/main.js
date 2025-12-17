@@ -1,7 +1,217 @@
-// 监听按钮点击
+// Dark mode
+(function() {
+  var themeMode = (typeof window.__ONCE_THEME_MODE__ === 'string') ? window.__ONCE_THEME_MODE__ : 'auto';
+  if (themeMode !== "auto" && themeMode !== "light" && themeMode !== "dark") themeMode = "auto";
+
+  var autoTimerId = null;
+
+  function isDaytime() {
+    var now = new Date();
+    var hour = now.getHours();
+    return hour >= 6 && hour < 18;
+  }
+
+  function getSavedMode() {
+    try { return localStorage.getItem("isDarkMode"); } catch (e) { return null; }
+  }
+
+  function setSavedMode(mode) {
+    try { localStorage.setItem("isDarkMode", mode); } catch (e) {}
+  }
+
+  function clearAutoTimer() {
+    if (autoTimerId) {
+      clearTimeout(autoTimerId);
+      autoTimerId = null;
+    }
+  }
+
+  function setDarkClass(isDark) {
+    if (isDark) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+  }
+
+  function getNextChangeTime() {
+    var now = new Date();
+    var next = new Date();
+
+    if (isDaytime()) {
+      next.setHours(18, 0, 0, 0);
+    } else {
+      next.setHours(6, 0, 0, 0);
+      if (next <= now) next.setDate(next.getDate() + 1);
+    }
+
+    var delay = next.getTime() - now.getTime();
+    return delay > 0 ? delay : 1000;
+  }
+
+  function scheduleNextChange() {
+    clearAutoTimer();
+    autoTimerId = setTimeout(function() {
+      if (!getSavedMode()) {
+        setDarkClass(!isDaytime());
+        scheduleNextChange();
+      }
+    }, getNextChangeTime());
+  }
+
+  function applyInitialMode() {
+    var savedMode = getSavedMode();
+    if (savedMode === "1") {
+      setDarkClass(true);
+      clearAutoTimer();
+      return;
+    }
+    if (savedMode === "0") {
+      setDarkClass(false);
+      clearAutoTimer();
+      return;
+    }
+
+    if (themeMode === "dark") {
+      setDarkClass(true);
+      clearAutoTimer();
+      return;
+    }
+    if (themeMode === "light") {
+      setDarkClass(false);
+      clearAutoTimer();
+      return;
+    }
+
+    // auto
+    setDarkClass(!isDaytime());
+    scheduleNextChange();
+  }
+
+  window.switchDarkMode = function() {
+    var savedMode = getSavedMode();
+    var hasDarkClass = document.documentElement.classList.contains("dark");
+    if (savedMode === "1" || (savedMode !== "0" && hasDarkClass)) {
+      setSavedMode("0");
+      setDarkClass(false);
+      clearAutoTimer();
+    } else {
+      setSavedMode("1");
+      setDarkClass(true);
+      clearAutoTimer();
+    }
+  };
+
+  window.resetDarkMode = function() {
+    try { localStorage.removeItem("isDarkMode"); } catch (e) {}
+    applyInitialMode();
+  };
+
+  applyInitialMode();
+})();
+
+function onceInitCodeBlocks(root) {
+  if (!root) root = document;
+  var codeBlocks = root.querySelectorAll('.wznrys pre > code, .comment-content pre > code');
+  for (var i = 0; i < codeBlocks.length; i++) {
+    var codeEl = codeBlocks[i];
+    if (codeEl.dataset && codeEl.dataset.lang) continue;
+
+    var codeClassName = (codeEl.getAttribute('class') || '').trim();
+    var preClassName = (codeEl.parentElement && codeEl.parentElement.tagName === 'PRE')
+      ? (codeEl.parentElement.getAttribute('class') || '').trim()
+      : '';
+
+    var match =
+      codeClassName.match(/(?:^|\s)(?:language|lang)-([a-z0-9_+-]+)/i) ||
+      preClassName.match(/(?:^|\s)(?:language|lang)-([a-z0-9_+-]+)/i);
+
+    if (!match) continue;
+    codeEl.setAttribute('data-lang', match[1]);
+  }
+
+  // Add copy button for code blocks
+  var preBlocks = root.querySelectorAll('.wznrys pre, .comment-content pre');
+  for (var j = 0; j < preBlocks.length; j++) {
+    var preEl = preBlocks[j];
+    if (preEl.querySelector('.once-copy-btn')) continue;
+
+    var codeChild = preEl.querySelector('code');
+    if (!codeChild) continue;
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'once-copy-btn';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.textContent = '复制';
+
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var button = this;
+      var pre = button.parentNode;
+      var code = pre ? pre.querySelector('code') : null;
+      if (!code) return;
+
+      var text = '';
+      var codeCells = code.querySelectorAll('td.hljs-ln-code');
+      if (codeCells && codeCells.length) {
+        var lines = [];
+        for (var k = 0; k < codeCells.length; k++) {
+          lines.push(codeCells[k].textContent || '');
+        }
+        text = lines.join('\n');
+      } else {
+        text = code.textContent || '';
+      }
+
+      // Normalize line endings and trim trailing newlines
+      text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n+$/, '');
+
+      function setCopiedState(ok) {
+        var old = button.textContent;
+        button.textContent = ok ? '已复制' : '复制失败';
+        setTimeout(function() { button.textContent = old; }, 1200);
+      }
+
+      function fallbackCopy(value) {
+        var textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.setAttribute('readonly', 'readonly');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          var ok = document.execCommand('copy');
+          setCopiedState(!!ok);
+        } catch (err) {
+          setCopiedState(false);
+        }
+        document.body.removeChild(textarea);
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          setCopiedState(true);
+        }).catch(function() {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    });
+
+    preEl.appendChild(btn);
+  }
+}
+
 jQuery(document).ready(function($){
   //table预设calss
-  $('.wznrys table').addClass("table");
+  $('.wznrys table, .comment-content table')
+    .not('.wznrys pre table')
+    .not('.comment-content pre table')
+    .addClass("table");
+  onceInitCodeBlocks(document);
 });
 
 $(document).ready(function(){
@@ -25,24 +235,29 @@ function ds_mainmenu(ulclass){
 ds_mainmenu('.header-menu-ul');
 
 //返回顶部
-const scrollToTopBtn = document.querySelector(".scrollToTopBtn")
-const rootElement = document.documentElement
+var scrollToTopBtn = document.querySelector(".scrollToTopBtn");
+var rootElement = document.documentElement;
 function handleScroll() {
-  const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight
-  if ((rootElement.scrollTop / scrollTotal ) > 0.80 ) {
-    scrollToTopBtn.classList.add("showBtn")
+  var scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
+  if ((rootElement.scrollTop / scrollTotal) > 0.80) {
+    scrollToTopBtn.classList.add("showBtn");
   } else {
-    scrollToTopBtn.classList.remove("showBtn")
+    scrollToTopBtn.classList.remove("showBtn");
   }
 }
 function scrollToTop() {
-  rootElement.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  })
+  if (rootElement.scrollTo) {
+    try {
+      rootElement.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    } catch (e) {}
+  }
+  rootElement.scrollTop = 0;
 }
-scrollToTopBtn.addEventListener("click", scrollToTop)
-document.addEventListener("scroll", handleScroll)
+if (scrollToTopBtn) {
+  scrollToTopBtn.addEventListener("click", scrollToTop);
+  document.addEventListener("scroll", handleScroll);
+}
 
 // 点赞功能
 $(document).ready(function(){
@@ -53,37 +268,38 @@ $(document).ready(function(){
 
   // 设置 Cookie 函数
   function setLikeCookie(cid) {
-      const expires = new Date();
+      var expires = new Date();
       expires.setHours(23, 59, 59, 999);
-      document.cookie = `post_like_${cid}=1; expires=${expires.toUTCString()}; path=/`;
+      document.cookie = 'post_like_' + cid + '=1; expires=' + expires.toUTCString() + '; path=/';
   }
 
   // 显示提示消息
-  function showToast(message, type = 'info') {
+  function showToast(message, type) {
+      if (typeof type === 'undefined') type = 'info';
       // 创建toast容器（如果不存在）
       if (!$('.toast-container').length) {
           $('body').append('<div class="toast-container"></div>');
       }
       
       // 创建唯一的toast ID
-      const toastId = 'toast-' + Date.now();
+      var toastId = 'toast-' + Date.now();
       
       // 创建toast元素
-      const toastHtml = `<div id="${toastId}" class="toast ${type}">${message}</div>`;
+      var toastHtml = '<div id="' + toastId + '" class="toast ' + type + '">' + message + '</div>';
       
       // 添加toast到容器
       $('.toast-container').append(toastHtml);
       
       // 显示toast（添加show类触发动画）
-      setTimeout(() => {
-          $(`#${toastId}`).addClass('show');
+      setTimeout(function() {
+          $('#' + toastId).addClass('show');
       }, 10);
       
       // 3秒后自动隐藏并移除toast
-      setTimeout(() => {
-          $(`#${toastId}`).removeClass('show');
-          setTimeout(() => {
-              $(`#${toastId}`).remove();
+      setTimeout(function() {
+          $('#' + toastId).removeClass('show');
+          setTimeout(function() {
+              $('#' + toastId).remove();
           }, 300);
       }, 3000);
   }
@@ -180,6 +396,7 @@ $(document).on('click', '.post-read-more a', function(e){
                 $('.post_box').append($newPosts);
                 // 新文章淡入效果
                 $newPosts.hide().fadeIn(500);
+                $newPosts.each(function() { onceInitCodeBlocks(this); });
             }
             
             // 更新"加载更多"按钮或移除它
@@ -319,30 +536,31 @@ document.addEventListener('DOMContentLoaded', function() {
 // 懒加载实现
 document.addEventListener('DOMContentLoaded', function() {
     // 懒加载初始化
-    let lazyloadImages = document.querySelectorAll('.lazyload');
-    let imageObserver = null;
+    var lazyloadImages = document.querySelectorAll('.lazyload');
+    var imageObserver = null;
     
     // 检查浏览器是否支持IntersectionObserver
     if ("IntersectionObserver" in window) {
         imageObserver = new IntersectionObserver(function(entries, observer) {
-            entries.forEach(function(entry) {
+            for (var i = 0; i < entries.length; i++) {
+                var entry = entries[i];
                 if (entry.isIntersecting) {
-                    let image = entry.target;
-                    if (image.dataset.src) {
+                    var image = entry.target;
+                    if (image.dataset && image.dataset.src) {
                         image.src = image.dataset.src;
                     }
                     image.classList.remove("lazyload");
                     imageObserver.unobserve(image);
                 }
-            });
+            }
         });
 
-        lazyloadImages.forEach(function(image) {
-            imageObserver.observe(image);
-        });
+        for (var j = 0; j < lazyloadImages.length; j++) {
+            imageObserver.observe(lazyloadImages[j]);
+        }
     } else {
         // 降级处理：滚动事件监听
-        let lazyloadThrottleTimeout;
+        var lazyloadThrottleTimeout;
         
         function lazyload() {
             if (lazyloadThrottleTimeout) {
@@ -350,16 +568,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             lazyloadThrottleTimeout = setTimeout(function() {
-                let scrollTop = window.pageYOffset;
+                var scrollTop = window.pageYOffset;
                 
-                lazyloadImages.forEach(function(img) {
+                for (var k = 0; k < lazyloadImages.length; k++) {
+                    var img = lazyloadImages[k];
                     if (img.offsetTop < (window.innerHeight + scrollTop)) {
-                        if (img.dataset.src) {
+                        if (img.dataset && img.dataset.src) {
                             img.src = img.dataset.src;
                         }
                         img.classList.remove('lazyload');
                     }
-                });
+                }
                 
                 if (lazyloadImages.length == 0) { 
                     document.removeEventListener("scroll", lazyload);
@@ -380,14 +599,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // 处理"加载更多"后的新图片
     $(document).ajaxSuccess(function() {
         setTimeout(function() {
-            let newLazyImages = document.querySelectorAll('.lazyload');
+            var newLazyImages = document.querySelectorAll('.lazyload');
             if ("IntersectionObserver" in window && imageObserver) {
-                newLazyImages.forEach(function(image) {
-                    if (!image.classList.contains('observed')) {
-                        imageObserver.observe(image);
-                        image.classList.add('observed');
+                for (var idx = 0; idx < newLazyImages.length; idx++) {
+                    var newImg = newLazyImages[idx];
+                    if (!newImg.classList.contains('observed')) {
+                        imageObserver.observe(newImg);
+                        newImg.classList.add('observed');
                     }
-                });
+                }
             } else {
                 // 触发一次lazyload函数
                 if (typeof lazyload === 'function') {

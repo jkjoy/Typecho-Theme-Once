@@ -12,7 +12,11 @@
             'tag'      => _t('标签 %s 下的文章'),
             'author'   => _t('%s 发布的文章')
         ], '', ' - '); ?><?php $this->options->title(); ?> | <?php $this->options->description(); ?></title>
-    <link rel='icon' href='<?php $this->options->faviconUrl(); ?>' type='image/x-icon' />
+    <?php if ($this->options->faviconUrl): ?>
+    <link rel="icon" href="<?php $this->options->faviconUrl(); ?>" type="image/x-icon" />
+    <?php else: ?>
+    <link rel="icon" href="<?php $this->options->themeUrl('assets/img/nopic.svg'); ?>" type="image/svg+xml" />
+    <?php endif; ?>
     <!-- 预加载logo图片 -->
     <?php if ($this->options->logoUrl): ?>
     <link rel="preload" href="<?php $this->options->logoUrl(); ?>" as="image">
@@ -21,111 +25,41 @@
     <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/bootstrap.min.css'); ?>">
     <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/bifont/bootstrap-icons.css'); ?>">
     <script type="text/javascript" src="<?php $this->options->themeUrl('assets/js/jquery.min.js'); ?>" id="jquery-min-js"></script>
-    <!-- 通过自有函数输出HTML头部信息 -->
+    <!-- Dark mode config (read by assets/js/main.js) -->
     <script>
-(function() {
-  // 检查当前是否在日间时段（6:00-18:00）
-  function isDaytime() {
-    const now = new Date();
-    const hour = now.getHours();
-    return hour >= 6 && hour < 18;
-  }
-  // 后台设置
-  var themeMode = '<?php echo trim($this->options->darkMode()); ?>'; 
-  // 统一使用 isDarkMode 作为存储键，值用 "1"/"0"
-  function setDark() {
-    localStorage.setItem("isDarkMode", "1");
-    document.documentElement.classList.add("dark");
-  }
-  function removeDark() {
-    localStorage.setItem("isDarkMode", "0");
-    document.documentElement.classList.remove("dark");
-  }
-  // 初始化
-  var savedMode = localStorage.getItem("isDarkMode");
-  if (savedMode === "1" || savedMode === "0") {
-    // 用户手动设置过
-    if (savedMode === "1") {
-      setDark();
-    } else {
-      removeDark();
-    }
-  } else if (themeMode === 'auto') {
-    // 自动模式：根据时间判断
-    if (!isDaytime()) {
-      setDark();
-    } else {
-      removeDark();
-    }
-  } else {
-    // 固定模式：跟随后台设置
-    if (themeMode === 'dark') {
-      setDark();
-    } else {
-      removeDark();
-    }
-  }
-  // 在自动模式下设置定时器
-  if (themeMode === 'auto' && !savedMode) {
-    function getNextChangeTime() {
-      const now = new Date();
-      const next = new Date();
-      
-      if (isDaytime()) {
-        next.setHours(18, 0, 0, 0);
-      } else {
-        next.setHours(6, 0, 0, 0);
-        if (next <= now) {
-          next.setDate(next.getDate() + 1);
+      window.__ONCE_THEME_MODE__ = <?php
+        $themeMode = 'auto';
+        if (isset($this->options->darkMode) && $this->options->darkMode !== '') {
+          $themeMode = (string)$this->options->darkMode;
         }
-      } 
-      return next.getTime() - now.getTime();
-    }
-    function scheduleNextChange() {
-      const delay = getNextChangeTime();
-      setTimeout(() => {
-        if (!localStorage.getItem("isDarkMode")) {
-          if (isDaytime()) {
-            removeDark();
-          } else {
-            setDark();
-          }
-          scheduleNextChange();
+        echo json_encode(trim($themeMode), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+      ?>;
+      (function() {
+        var themeMode = window.__ONCE_THEME_MODE__;
+        if (themeMode !== "auto" && themeMode !== "light" && themeMode !== "dark") themeMode = "auto";
+
+        var savedMode = null;
+        try { savedMode = localStorage.getItem("isDarkMode"); } catch (e) {}
+
+        function isDaytime() {
+          var now = new Date();
+          var hour = now.getHours();
+          return hour >= 6 && hour < 18;
         }
-      }, delay);
-    }
-    scheduleNextChange();
-  }
-  // 切换按钮函数
-  window.switchDarkMode = function() {
-    let isDark = localStorage.getItem("isDarkMode");
-    if (isDark === "1") {
-      removeDark();
-    } else {
-      setDark();
-    }
-  };
-  // 重置为自动模式
-  window.resetDarkMode = function() {
-    localStorage.removeItem("isDarkMode");
-    if (themeMode === 'auto') {
-      if (isDaytime()) {
-        removeDark();
-      } else {
-        setDark();
-      }
-      scheduleNextChange();
-    } else {
-      if (themeMode === 'dark') {
-        setDark();
-      } else {
-        removeDark();
-      }
-    }
-  };
-})();
-</script>
+
+        var shouldDark = false;
+        if (savedMode === "1") shouldDark = true;
+        else if (savedMode === "0") shouldDark = false;
+        else if (themeMode === "dark") shouldDark = true;
+        else if (themeMode === "light") shouldDark = false;
+        else shouldDark = !isDaytime();
+
+        if (shouldDark) document.documentElement.classList.add("dark");
+        else document.documentElement.classList.remove("dark");
+      })();
+    </script>
 <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/style.css'); ?>">
+<script src="<?php $this->options->themeUrl('assets/js/main.js'); ?>" defer></script>
 </head>
 <body class="home blog">
 <header class="header sticky-top">
@@ -211,7 +145,7 @@
                 </nav>        	
             </div>
         	<div class="top_r">
-        		<div class="top_r_an theme-switch me-4" onclick="switchDarkMode()">
+        		<div class="top_r_an theme-switch me-4" onclick="window.switchDarkMode && window.switchDarkMode()">
                     <i class="bi bi-lightbulb-fill"></i>
                 </div>
 				<button class="top_r_an" type="button" data-bs-toggle="offcanvas" data-bs-target="#c_sousuo">
@@ -247,7 +181,7 @@
 		                  <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><b><?php $this->options->title() ?></b></a>
 		       	<?php endif; ?>
 		      </div>
-		<div class="theme-switch" onclick="switchDarkMode()"><i class="bi bi-lightbulb-fill"></i></div>
+		<div class="theme-switch" onclick="window.switchDarkMode && window.switchDarkMode()"><i class="bi bi-lightbulb-fill"></i></div>
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
 	</div>
     <div id="sjcldnav" class="menu-zk">
