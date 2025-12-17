@@ -284,9 +284,10 @@ function get_post_thumbnail($post) {
                 $images[8] = $thumbnail;
             }
         }
+        // 只生成首图缩略图，避免一次请求生成多张缩略图导致卡顿
         $cropped_images = array();
-        foreach ($images as $img) {
-            $cropped_images[] = get_thumb($img, $theme_dir);
+        if (!empty($images[0])) {
+            $cropped_images[] = get_thumb($images[0], $theme_dir);
         }
         $result['images'] = $images;
         $result['cropped_images'] = $cropped_images;
@@ -326,19 +327,95 @@ function get_thumb($imgUrl, $options) {
     $hash = md5($imgUrl);
     $thumbnail_path = $upload_dir . $hash . '.webp';
     $thumbnail_url = Helper::options()->themeUrl . '/thumbnails/' . $hash . '.webp';
+    $fail_path = $thumbnail_path . '.fail';
+    $lock_path = $thumbnail_path . '.lock';
+    $fail_ttl = 6 * 3600; // 失败缓存 6 小时，避免每次请求都阻塞重试
+
     // 如果缩略图已存在，直接返回
     if (file_exists($thumbnail_path)) {
         return $thumbnail_url;
     }
-    // 获取原始图片
-    $img_data = @file_get_contents($imgUrl);
+
+    // 最近生成失败过，直接返回原图（由 <img onerror> 兜底）
+    if (file_exists($fail_path) && (time() - filemtime($fail_path)) < $fail_ttl) {
+        return $imgUrl;
+    }
+
+    // GD 不可用直接返回原图
+    if (!function_exists('imagecreatefromstring') || !function_exists('imagewebp')) {
+        return $imgUrl;
+    }
+
+    // 并发锁：避免多个请求同时生成同一张缩略图
+    $lock_fp = @fopen($lock_path, 'c');
+    if ($lock_fp) {
+        if (!@flock($lock_fp, LOCK_EX | LOCK_NB)) {
+            @fclose($lock_fp);
+            return $imgUrl;
+        }
+    }
+
+    // 拿到锁后再检查一次
+    if (file_exists($thumbnail_path)) {
+        if ($lock_fp) {
+            @flock($lock_fp, LOCK_UN);
+            @fclose($lock_fp);
+        }
+        return $thumbnail_url;
+    }
+
+    // 尽量走本地文件读取，避免 HTTP 自己请求自己导致变慢
+    $img_data = false;
+    $img_url_str = (string)$imgUrl;
+    $site_url = (string)Helper::options()->siteUrl;
+    $site_host = '';
+    $parsed_site = @parse_url($site_url);
+    if ($parsed_site && isset($parsed_site['host'])) {
+        $site_host = strtolower($parsed_site['host']);
+    }
+    $parsed_img = @parse_url($img_url_str);
+    if ($parsed_img && isset($parsed_img['path'])) {
+        $img_host = isset($parsed_img['host']) ? strtolower($parsed_img['host']) : '';
+        $img_path = $parsed_img['path'];
+        if ($img_path && ($img_host === '' || $img_host === $site_host)) {
+            $root_real = @realpath(__TYPECHO_ROOT_DIR__);
+            $candidate = @realpath(__TYPECHO_ROOT_DIR__ . '/' . ltrim($img_path, '/'));
+            if ($root_real && $candidate && stripos($candidate, $root_real) === 0 && is_file($candidate) && is_readable($candidate)) {
+                $img_data = @file_get_contents($candidate);
+            }
+        }
+    }
+
+    // 远程拉取（设置超时，避免卡顿）
     if ($img_data === false) {
-        return $default_thumbnail; // 图片404或无法获取时，返回默认图片
+        $ctx = stream_context_create([
+            'http' => [
+                'header' => "User-Agent: Typecho-Theme-Once\r\n",
+                'timeout' => 3,
+                'follow_location' => 1,
+                'max_redirects' => 3
+            ]
+        ]);
+        $img_data = @file_get_contents($img_url_str, false, $ctx);
+    }
+
+    if ($img_data === false) {
+        @file_put_contents($fail_path, (string)time());
+        if ($lock_fp) {
+            @flock($lock_fp, LOCK_UN);
+            @fclose($lock_fp);
+        }
+        return $imgUrl;
     }
     // 创建图片资源
     $src = @imagecreatefromstring($img_data);
     if (!$src) {
-        return $default_thumbnail; // 图片格式无效或无法创建资源时，返回默认图片
+        @file_put_contents($fail_path, (string)time());
+        if ($lock_fp) {
+            @flock($lock_fp, LOCK_UN);
+            @fclose($lock_fp);
+        }
+        return $imgUrl; // 图片格式无效或无法创建资源时，返回原图
     }
     try {
         $width = imagesx($src);
@@ -373,12 +450,18 @@ function get_thumb($imgUrl, $options) {
             $dst_width, $dst_height,
             $new_width, $new_height
         );
-        // 保存缩略图
-        imagewebp($thumb, $thumbnail_path, 85);
+        // 保存缩略图（先写临时文件再替换，避免并发/中断导致损坏）
+        $tmp_path = $thumbnail_path . '.tmp';
+        imagewebp($thumb, $tmp_path, 80);
+        @rename($tmp_path, $thumbnail_path);
+        if (file_exists($fail_path)) {
+            @unlink($fail_path);
+        }
         return $thumbnail_url;
     } catch (Exception $e) {
         // 发生异常时返回默认图片
-        return $default_thumbnail;
+        @file_put_contents($fail_path, (string)time());
+        return $imgUrl;
     } finally {
         // 释放资源
         if (isset($src)) {
@@ -386,6 +469,10 @@ function get_thumb($imgUrl, $options) {
         }
         if (isset($thumb)) {
             imagedestroy($thumb);
+        }
+        if ($lock_fp) {
+            @flock($lock_fp, LOCK_UN);
+            @fclose($lock_fp);
         }
     }
 }
