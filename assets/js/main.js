@@ -368,6 +368,156 @@ $(document).ready(function(){
 });
 
 // 加载更多文章
+var oncePrefetchState = {
+  url: null,
+  html: null,
+  xhr: null,
+  timerId: null
+};
+
+function oncePrefetchClear() {
+  if (oncePrefetchState.timerId) {
+    clearTimeout(oncePrefetchState.timerId);
+    oncePrefetchState.timerId = null;
+  }
+  if (oncePrefetchState.xhr && oncePrefetchState.xhr.abort) {
+    try { oncePrefetchState.xhr.abort(); } catch (e) {}
+  }
+  oncePrefetchState.xhr = null;
+  oncePrefetchState.html = null;
+  oncePrefetchState.url = null;
+}
+
+function oncePrefetchStart(url) {
+  if (!url) return;
+  if (oncePrefetchState.url === url && (oncePrefetchState.html || oncePrefetchState.xhr)) return;
+
+  if (oncePrefetchState.xhr && oncePrefetchState.xhr.abort) {
+    try { oncePrefetchState.xhr.abort(); } catch (e) {}
+  }
+
+  oncePrefetchState.url = url;
+  oncePrefetchState.html = null;
+
+  var jsonUrl = onceToJsonUrl(url);
+
+  oncePrefetchState.xhr = $.ajax({
+    url: jsonUrl,
+    type: 'GET',
+    dataType: 'json'
+  }).done(function(data) {
+    if (oncePrefetchState.url === url) {
+      oncePrefetchState.html = data;
+    }
+  }).fail(function() {
+    if (oncePrefetchState.url !== url) return;
+    // Fallback to HTML
+    oncePrefetchState.xhr = $.ajax({
+      url: url,
+      type: 'GET',
+      dataType: 'html'
+    }).done(function(data) {
+      if (oncePrefetchState.url === url) {
+        oncePrefetchState.html = data;
+      }
+    });
+  }).always(function() {
+    if (oncePrefetchState.url === url) {
+      oncePrefetchState.xhr = null;
+    }
+  });
+}
+
+function oncePrefetchSchedule(url, delay) {
+  if (!url) return;
+  if (typeof delay === 'undefined') delay = 600;
+
+  if (oncePrefetchState.timerId) clearTimeout(oncePrefetchState.timerId);
+  oncePrefetchState.timerId = setTimeout(function() {
+    oncePrefetchState.timerId = null;
+    oncePrefetchStart(url);
+  }, delay);
+}
+
+function onceConsumePrefetch(url, onSuccess, onError) {
+  if (oncePrefetchState.url !== url) return false;
+
+  if (oncePrefetchState.html) {
+    var html = oncePrefetchState.html;
+    oncePrefetchState.html = null;
+    onSuccess(html);
+    return true;
+  }
+
+  if (oncePrefetchState.xhr) {
+    oncePrefetchState.xhr.done(function(data) {
+      onSuccess(data);
+    }).fail(function(xhr, status, error) {
+      if (typeof onError === 'function') onError(xhr, status, error);
+    });
+    return true;
+  }
+
+  return false;
+}
+
+function onceToJsonUrl(url) {
+  if (!url) return url;
+  if (url.indexOf('once_json=1') !== -1) return url;
+  return url + (url.indexOf('?') === -1 ? '?' : '&') + 'once_json=1';
+}
+
+function onceAppendNextPageHtml(data, $btn) {
+  var $html = $('<div></div>').html(data);
+  var $newPosts = $html.find('.post_loop');
+  var $newBtn = $html.find('.post-read-more a');
+
+  if ($newPosts.length > 0) {
+    $('.post_box').append($newPosts);
+    $newPosts.hide().fadeIn(300);
+    $newPosts.each(function() { onceInitCodeBlocks(this); });
+  }
+
+  if ($newBtn.length > 0) {
+    var nextHref = $newBtn.attr('href');
+    $btn.attr('href', nextHref)
+       .removeClass('loading')
+       .text('加载更多');
+
+    // Prefetch the following page after updating href
+    oncePrefetchSchedule(nextHref, 800);
+  } else {
+    $('.post-read-more').remove();
+    oncePrefetchClear();
+  }
+}
+
+function onceAppendNextPageJson(payload, $btn) {
+  if (!payload || typeof payload !== 'object') return false;
+  var postsHtml = payload.html || '';
+  var nextHref = payload.next || null;
+
+  var $wrap = $('<div></div>').html(postsHtml);
+  var $newPosts = $wrap.children();
+  if ($newPosts.length > 0) {
+    $('.post_box').append($newPosts);
+    $newPosts.hide().fadeIn(300);
+    $newPosts.each(function() { onceInitCodeBlocks(this); });
+  }
+
+  if (nextHref) {
+    $btn.attr('href', nextHref)
+       .removeClass('loading')
+       .text('加载更多');
+    oncePrefetchSchedule(nextHref, 800);
+  } else {
+    $('.post-read-more').remove();
+    oncePrefetchClear();
+  }
+
+  return true;
+}
+
 $(document).on('click', '.post-read-more a', function(e){
     e.preventDefault();
     var $btn = $(this);
@@ -376,45 +526,74 @@ $(document).on('click', '.post-read-more a', function(e){
     if($btn.hasClass('loading')) return false;
     
     $btn.addClass('loading').text('加载中...');
-    
-    $.ajax({
-        url: nextPage,
-        type: 'GET',
-        dataType: 'html',
-        success: function(data){
-            // 创建一个临时的DOM元素来解析返回的HTML
-            var $html = $('<div></div>').html(data);
-            
-            // 找到新的文章
-            var $newPosts = $html.find('.post_loop');
-            
-            // 找到新的"加载更多"按钮
-            var $newBtn = $html.find('.post-read-more a');
-            
-            // 将新文章添加到页面
-            if ($newPosts.length > 0) {
-                $('.post_box').append($newPosts);
-                // 新文章淡入效果
-                $newPosts.hide().fadeIn(500);
-                $newPosts.each(function() { onceInitCodeBlocks(this); });
-            }
-            
-            // 更新"加载更多"按钮或移除它
-            if($newBtn.length > 0){
-                $btn.attr('href', $newBtn.attr('href'))
-                   .removeClass('loading')
-                   .text('加载更多');
-            } else {
-                $('.post-read-more').remove();
-            }
-        },
-        error: function(xhr, status, error){
-            console.error("AJAX Error:", status, error);
-            $btn.removeClass('loading').text('加载失败，点击重试');
-        }
+
+    var usedPrefetch = onceConsumePrefetch(nextPage, function(payload) {
+      if (payload && typeof payload === 'object') {
+        onceAppendNextPageJson(payload, $btn);
+      } else {
+        onceAppendNextPageHtml(payload, $btn);
+      }
+    }, function(xhr, status, error) {
+      console.error("AJAX Error:", status, error);
+      $btn.removeClass('loading').text('加载失败，点击重试');
     });
+
+    if (!usedPrefetch) {
+      $.ajax({
+          url: onceToJsonUrl(nextPage),
+          type: 'GET',
+          dataType: 'json',
+          success: function(data){
+              if (!onceAppendNextPageJson(data, $btn)) {
+                $btn.removeClass('loading').text('加载失败，点击重试');
+              }
+          },
+          error: function() {
+              // Fallback to HTML
+              $.ajax({
+                url: nextPage,
+                type: 'GET',
+                dataType: 'html',
+                success: function(html) {
+                  onceAppendNextPageHtml(html, $btn);
+                },
+                error: function(xhr, status, error) {
+                  console.error("AJAX Error:", status, error);
+                  $btn.removeClass('loading').text('加载失败，点击重试');
+                }
+              });
+          }
+      });
+    }
     
     return false;
+});
+
+// Prefetch next page to make "加载更多" feel instant
+$(document).on('mouseenter touchstart', '.post-read-more a', function() {
+  var href = $(this).attr('href');
+  oncePrefetchSchedule(href, 150);
+});
+
+$(document).ready(function() {
+  var $btn = $('.post-read-more a').first();
+  if ($btn.length) {
+    oncePrefetchSchedule($btn.attr('href'), 1200);
+
+    if ('IntersectionObserver' in window) {
+      try {
+        var io = new IntersectionObserver(function(entries) {
+          for (var i = 0; i < entries.length; i++) {
+            if (entries[i].isIntersecting) {
+              oncePrefetchSchedule($btn.attr('href'), 100);
+              break;
+            }
+          }
+        }, { rootMargin: '600px 0px' });
+        io.observe($btn.get(0));
+      } catch (e) {}
+    }
+  }
 });
 
 // 确保Bootstrap组件正确初始化

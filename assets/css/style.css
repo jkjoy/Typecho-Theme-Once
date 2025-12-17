@@ -480,7 +480,7 @@ img{border:0;max-width:100%;height:auto;}
 .wznrys pre:after,
 .comment-content pre:after{content:"";position:absolute;border-radius:50%;background:#ff5f57;width:12px;height:12px;left:14px;top:13px;box-shadow:20px 0 0 #febc2e,40px 0 0 #28c840;z-index:2;}
 .wznrys pre code,
-.comment-content pre code{display:block;font-size:13px;line-height:1.8;padding:14px 16px 16px;overflow:auto;color:#24292f;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
+.comment-content pre code{display:block;font-size:13px;line-height:1.8;padding:14px 16px 16px;overflow:auto;color:#24292f;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;}
 .wznrys pre code[data-lang]:before,
 .comment-content pre code[data-lang]:before{content:attr(data-lang);position:absolute;top:9px;left:50%;transform:translateX(-50%);max-width:calc(100% - 120px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7280;font-size:11px;letter-spacing:.02em;text-transform:uppercase;z-index:2;pointer-events:none;}
 .wznrys pre .once-copy-btn,
@@ -502,7 +502,7 @@ img{border:0;max-width:100%;height:auto;}
 .wznrys pre code table tr td.hljs-ln-numbers .hljs-ln-n:before,
 .comment-content pre code table tr td.hljs-ln-numbers .hljs-ln-n:before{padding-right:10px;}
 .wznrys pre code table tr td.hljs-ln-code,
-.comment-content pre code table tr td.hljs-ln-code{border-left:1px solid rgba(0,0,0,.08);padding-left:16px;}
+.comment-content pre code table tr td.hljs-ln-code{border-left:1px solid rgba(0,0,0,.08);padding-left:16px;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;}
 .wznrys pre code table tr td,
 .comment-content pre code table tr td{border:none;text-align:inherit;line-height:inherit;}
 .dark .wznrys pre,
