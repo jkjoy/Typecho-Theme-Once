@@ -536,6 +536,24 @@ function once_charset()
     return $charset ?: 'UTF-8';
 }
 
+/**
+ * 深度解码 HTML 实体（用于修复被重复转义的标题等文本）。
+ */
+function once_decode_html_entities_deep($value, $maxDepth = 2)
+{
+    $str = (string)$value;
+    $maxDepth = (int)$maxDepth;
+    if ($maxDepth < 0) $maxDepth = 0;
+
+    $charset = once_charset();
+    for ($i = 0; $i < $maxDepth; $i++) {
+        $decoded = html_entity_decode($str, ENT_QUOTES | ENT_HTML5, $charset);
+        if ($decoded === $str) break;
+        $str = $decoded;
+    }
+    return $str;
+}
+
 function once_esc_html($value)
 {
     return htmlspecialchars((string)$value, ENT_QUOTES, once_charset());
@@ -585,7 +603,8 @@ function commentApprove($widget, $email = NULL)
     $result = array(
         "state" => -1,//状态
         "isAuthor" => 0,//是否是博主
-        "userLevel" => '',//用户身份或等级名称
+        "userLevel" => '',//用户身份或等级名称（纯文本）
+        "userLevelIcon" => '',//等级图标 class（如 bi bi-award-fill）
         "userDesc" => '',//用户title描述
         "bgColor" => '',//用户身份或等级背景色
         "commentNum" => 0//评论数量
@@ -598,7 +617,8 @@ function commentApprove($widget, $email = NULL)
     $isFriend = ($emailLower !== '' && !empty($friendList) && in_array($emailLower, $friendList, true)); 
     if ($widget->authorId == $widget->ownerId) {      
         $result['isAuthor'] = 1;//」
-        $result['userLevel'] = '「博主」<i class="bi bi-award-fill"></i>';
+        $result['userLevel'] = '「博主」';
+        $result['userLevelIcon'] = 'bi bi-award-fill';
         $result['userDesc'] = '本站站长';
         $result['bgColor'] = '#ef6762ff';
         $result['commentNum'] = 999;
@@ -616,39 +636,48 @@ function commentApprove($widget, $email = NULL)
                 ->where('user = ?',$email));       
             //等级判定
             if($commentNum==1){
-                $result['userLevel'] = '「初见」<i class="bi bi-0-circle"></i>';
+                $result['userLevel'] = '「初见」';
+                $result['userLevelIcon'] = 'bi bi-0-circle';
                 $result['bgColor'] = '#999999';
                 $userDesc = '人生一大步！';
             } else {
                 if ($commentNum<10 && $commentNum>1) {
-                    $result['userLevel'] = '「初识」<i class="bi bi-1-circle"></i>';
+                    $result['userLevel'] = '「初识」';
+                    $result['userLevelIcon'] = 'bi bi-1-circle';
                     $result['bgColor'] = '#999999';
                 }elseif ($commentNum<20 && $commentNum>=10) {
-                    $result['userLevel'] = '「相识」<i class="bi bi-2-circle"></i>';
+                    $result['userLevel'] = '「相识」';
+                    $result['userLevelIcon'] = 'bi bi-2-circle';
                     $result['bgColor'] = '#8dc7beff';
                 }elseif ($commentNum<40 && $commentNum>=20) {
-                    $result['userLevel'] = '「熟识」<i class="bi bi-3-circle"></i>';
+                    $result['userLevel'] = '「熟识」';
+                    $result['userLevelIcon'] = 'bi bi-3-circle';
                     $result['bgColor'] = '#3ceacdff';
                 }elseif ($commentNum<80 && $commentNum>=40) {
-                    $result['userLevel'] = '「好友」<i class="bi bi-4-circle"></i>';
+                    $result['userLevel'] = '「好友」';
+                    $result['userLevelIcon'] = 'bi bi-4-circle';
                     $result['bgColor'] = '#27ee15ff';
                 }elseif ($commentNum<160 && $commentNum>=80) {
-                    $result['userLevel'] = '「知己」<i class="bi bi-5-circle"></i>';
+                    $result['userLevel'] = '「知己」';
+                    $result['userLevelIcon'] = 'bi bi-5-circle';
                     $result['bgColor'] = '#e7e42dff';
                 }elseif ($commentNum>=160) {
-                    $result['userLevel'] = '「挚友」<i class="bi bi-6-circle"></i>';
+                    $result['userLevel'] = '「挚友」';
+                    $result['userLevelIcon'] = 'bi bi-6-circle';
                     $result['bgColor'] = '#fdf000ff';
                 }
                  $userDesc = '您在本站有'.$commentNum.'条留言！'; 
             }
             if($linkSql){
                 $result['userLevel'] = '「博友」';
+                $result['userLevelIcon'] = '';
                 $result['bgColor'] = '#00fd15ff';
                 $userDesc = '🔗'.$linkSql[0]['description'].'&#10;✌️'.$userDesc;
             }
             
             if ($isFriend) {
-                $result['userLevel'] = '「好友」<i class="bi bi-heart-fill"></i>';
+                $result['userLevel'] = '「好友」';
+                $result['userLevelIcon'] = 'bi bi-heart-fill';
                 $result['bgColor'] = '#880097ff';
                 $userDesc = '好基友认证&#10;' . $userDesc;
             }
@@ -658,6 +687,7 @@ function commentApprove($widget, $email = NULL)
             error_log('Error in commentApprove function: ' . $e->getMessage());
             // 设置默认值
             $result['userLevel'] = '「访客」';
+            $result['userLevelIcon'] = '';
             $result['bgColor'] = '#999999';
             $result['userDesc'] = '欢迎留言';
             $result['commentNum'] = 0;

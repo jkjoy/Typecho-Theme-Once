@@ -97,15 +97,16 @@ $sidebarCacheTtl = 600; // 秒：10 分钟
     try {
         // 获取指定用户的最近文章
         $recentPosts = Typecho_Widget::widget('Widget_Contents_Post_Recent', 'pageSize=' . $recentPostsCount . '&uid=' . $userId);
-        if ($recentPosts && $recentPosts->have()):
-            while ($recentPosts->next()):
-                $result = get_post_thumbnail($recentPosts);
-                $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
-                $commentsNum = intval($recentPosts->commentsNum);
-                $title = once_esc_html($recentPosts->title);
-                $titleAttr = once_esc_attr($recentPosts->title);
-            ?>
-                <li>
+	        if ($recentPosts && $recentPosts->have()):
+	            while ($recentPosts->next()):
+	                $result = get_post_thumbnail($recentPosts);
+	                $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
+	                $commentsNum = intval($recentPosts->commentsNum);
+	                $rawTitle = once_decode_html_entities_deep($recentPosts->title, 3);
+	                $title = once_esc_html($rawTitle);
+	                $titleAttr = once_esc_attr($rawTitle);
+	            ?>
+	                <li>
                     <img width="400" height="280" src="<?php echo once_esc_url($thumbnail); ?>"
                          data-src="<?php echo once_esc_url($thumbnail); ?>"
                          class="thumbnail lazyload"
@@ -188,13 +189,14 @@ $sidebarCacheTtl = 600; // 秒：10 分钟
 	            <h3 class="widget-title">热门文章</h3>
 	            <ul class="widget_hot_post">
 	                <?php
-	                foreach ($hotPostsView as $item):
-	                    $title = once_esc_html((string)($item['title'] ?? ''));
-	                    $titleAttr = once_esc_attr((string)($item['title'] ?? ''));
-	                    $permalink = once_esc_url((string)($item['permalink'] ?? '#'));
-	                    $commentsNum = (int)($item['commentsNum'] ?? 0);
-	                    $thumbnail = once_esc_url((string)($item['thumbnail'] ?? ''));
-	                ?>
+		                foreach ($hotPostsView as $item):
+		                    $rawTitle = once_decode_html_entities_deep((string)($item['title'] ?? ''), 3);
+		                    $title = once_esc_html($rawTitle);
+		                    $titleAttr = once_esc_attr($rawTitle);
+		                    $permalink = once_esc_url((string)($item['permalink'] ?? '#'));
+		                    $commentsNum = (int)($item['commentsNum'] ?? 0);
+		                    $thumbnail = once_esc_url((string)($item['thumbnail'] ?? ''));
+		                ?>
 	                        <li class="widget_hot_li">
 	                            <img width="400"
 	                                 height="280"

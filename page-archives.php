@@ -23,16 +23,15 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
         $output = ''; // 初始化输出变量
         $year = ''; // 当前年份
         $month = ''; // 当前月份
-	        foreach ($posts as $post) {
-	            // 处理文章数据
-	            $permalink = \Typecho\Router::url('post', $post, $this->options->index);
-	            $charset = once_charset();
-	            $titleDecoded = html_entity_decode((string)$post['title'], ENT_QUOTES | ENT_HTML5, $charset);
-	            $title = once_esc_html($titleDecoded);
-	            $created = $post['created'];
-            // 获取年月日
-            $postYear = date('Y', $created);
-            $postMonth = date('m', $created);
+		        foreach ($posts as $post) {
+		            // 处理文章数据
+		            $permalink = \Typecho\Router::url('post', $post, $this->options->index);
+		            $rawTitle = once_decode_html_entities_deep((string)$post['title'], 3);
+		            $title = once_esc_html($rawTitle);
+		            $created = $post['created'];
+	            // 获取年月日
+	            $postYear = date('Y', $created);
+	            $postMonth = date('m', $created);
             $postDay = date('d', $created);
 
             $output .= '<ul>';

@@ -4,13 +4,14 @@ $once_loop_image_lazy = isset($once_loop_image_lazy) ? (bool)$once_loop_image_la
 $result = get_post_thumbnail($this);
 $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
 $postTitle = isset($this->title) ? (string)$this->title : '';
+$postTitleNormalized = once_decode_html_entities_deep($postTitle, 3);
 $postPermalink = isset($this->permalink) ? (string)$this->permalink : '';
 if ($postPermalink === '') {
     ob_start();
     $this->permalink();
     $postPermalink = trim((string)ob_get_clean());
 }
-$postTitleAttr = once_esc_attr($postTitle);
+$postTitleAttr = once_esc_attr($postTitleNormalized);
 $postPermalinkAttr = once_esc_url($postPermalink);
 $thumbnailAttr = once_esc_url($thumbnail);
 ?>
@@ -38,12 +39,12 @@ $thumbnailAttr = once_esc_url($thumbnail);
 	            </a>
 	        </div>
         <div class="col-9">
-	            <div class="post_def_right">
-	                <div class="post_def_title">
-	                    <h2><a class="" href="<?php echo $postPermalinkAttr; ?>" title="<?php echo $postTitleAttr; ?>"><?php echo once_esc_html($postTitle); ?></a></h2>
-	                    <p><?php if ($this->fields->summary) { echo once_esc_html($this->fields->summary); } else { $this->excerpt(180); } ?></p>
-	                </div>
-	                <div class="post_info">
+		            <div class="post_def_right">
+		                <div class="post_def_title">
+		                    <h2><a class="" href="<?php echo $postPermalinkAttr; ?>" title="<?php echo $postTitleAttr; ?>"><?php echo once_esc_html($postTitleNormalized); ?></a></h2>
+		                    <p><?php if ($this->fields->summary) { echo once_esc_html($this->fields->summary); } else { $this->excerpt(180); } ?></p>
+		                </div>
+		                <div class="post_info">
 	                    <div class="post_info_l">
 	                        <span><i class="bi bi-text-left"></i>
 	                        <?php foreach($this->categories as $category): ?>

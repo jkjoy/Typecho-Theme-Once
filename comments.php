@@ -40,14 +40,17 @@ function getPermalinkFromCoid($coid) {
 	                                <a href="<?php echo once_esc_url($comments->url); ?>" target="_blank" rel="external nofollow" title="<?php echo once_esc_attr($commentApprove['userDesc'] ?? ''); ?>">
 	                                    <?php echo once_esc_html($comments->author); ?>
 	                                </a>
-	                            <?php else: ?>
-	                                <?php echo once_esc_html($comments->author); ?>  
-	                            <?php endif; ?>                            
-	                            <span style="margin-left: 10px;font-size:10px;color:<?php echo once_esc_attr($commentApprove['bgColor'] ?? ''); ?>;">
-	                             <?php echo once_esc_html($commentApprove['userLevel'] ?? ''); ?>
-	                            </span>
-	                            </b><span class="says">说道：</span>
-                        </div>
+		                            <?php else: ?>
+		                                <?php echo once_esc_html($comments->author); ?>  
+		                            <?php endif; ?>                            
+		                            <span style="margin-left: 10px;font-size:10px;color:<?php echo once_esc_attr($commentApprove['bgColor'] ?? ''); ?>;">
+		                             <?php echo once_esc_html($commentApprove['userLevel'] ?? ''); ?>
+		                             <?php if (!empty($commentApprove['userLevelIcon'])): ?>
+		                                 <i class="<?php echo once_esc_attr($commentApprove['userLevelIcon']); ?>"></i>
+		                             <?php endif; ?>
+		                            </span>
+		                            </b><span class="says">说道：</span>
+	                        </div>
                         <div class="comment-metadata">
                             <a href="<?php $comments->permalink(); ?>" title="<?php $comments->date('Y-m-d H:i'); ?>">
                                 <time datetime="<?php $comments->date('Y-m-d H:i'); ?>">

@@ -78,46 +78,52 @@
             $nextThumbnailUrl = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
         ?>
         <div class="next_prev_posts">
-	            <div class="prev_next_box nav_previous"<?php if (!$next) echo ' style="width:100%"'; ?>>
-	            <?php if ($prev):
-	                $prevUrl = Typecho_Router::url('post', $prev, $this->options->index);
-	            ?>
-	                <a href="<?php echo once_esc_url($prevUrl); ?>" title="<?php echo once_esc_attr($prev['title'] ?? ''); ?>" rel="prev" style="background-image: url('<?php echo once_esc_url($prevThumbnailUrl); ?>');">
-	                    <div class="prev_next_info">
-	                        <small>上一篇</small>
-	                        <p><?php echo once_esc_html($prev['title'] ?? ''); ?></p>
-	                    </div>
-	                </a>
-	            <?php else: ?>
+		            <div class="prev_next_box nav_previous"<?php if (!$next) echo ' style="width:100%"'; ?>>
+		            <?php if ($prev):
+		                $prevUrl = Typecho_Router::url('post', $prev, $this->options->index);
+		                $prevRawTitle = once_decode_html_entities_deep($prev['title'] ?? '', 3);
+		            ?>
+		                <a href="<?php echo once_esc_url($prevUrl); ?>" title="<?php echo once_esc_attr($prevRawTitle); ?>" rel="prev" style="background-image: url('<?php echo once_esc_url($prevThumbnailUrl); ?>');">
+		                    <div class="prev_next_info">
+		                        <small>上一篇</small>
+		                        <p><?php echo once_esc_html($prevRawTitle); ?></p>
+		                    </div>
+		                </a>
+		            <?php else: ?>
           
             <?php endif; ?>
             </div>
-	            <div class="prev_next_box nav_next"<?php if (!$prev) echo ' style="width:100%"'; ?>>
-	            <?php if ($next):
-	                $nextUrl = Typecho_Router::url('post', $next, $this->options->index);
-	            ?>
-	                <a href="<?php echo once_esc_url($nextUrl); ?>" title="<?php echo once_esc_attr($next['title'] ?? ''); ?>" rel="next" style="background-image: url('<?php echo once_esc_url($nextThumbnailUrl); ?>');">
-	                    <div class="prev_next_info">
-	                        <small>下一篇</small>
-	                        <p><?php echo once_esc_html($next['title'] ?? ''); ?></p>
-	                    </div>
-	                </a>
-	            <?php else: ?>
+		            <div class="prev_next_box nav_next"<?php if (!$prev) echo ' style="width:100%"'; ?>>
+		            <?php if ($next):
+		                $nextUrl = Typecho_Router::url('post', $next, $this->options->index);
+		                $nextRawTitle = once_decode_html_entities_deep($next['title'] ?? '', 3);
+		            ?>
+		                <a href="<?php echo once_esc_url($nextUrl); ?>" title="<?php echo once_esc_attr($nextRawTitle); ?>" rel="next" style="background-image: url('<?php echo once_esc_url($nextThumbnailUrl); ?>');">
+		                    <div class="prev_next_info">
+		                        <small>下一篇</small>
+		                        <p><?php echo once_esc_html($nextRawTitle); ?></p>
+		                    </div>
+		                </a>
+		            <?php else: ?>
     
             <?php endif; ?>
             </div>
         </div>
     <?php $this->related(6)->to($relatedPosts); if ($relatedPosts->have()):?>
-    <div class="post_related mb-3">    
-	        <h3 class="widget-title">相关文章</h3>
-	        <?php while ($relatedPosts->next()): ?> 
-	            <div class="post_related_list">
-	                <a href="<?php $relatedPosts->permalink(); ?>" class="" title="<?php echo once_esc_attr($relatedPosts->title ?? ''); ?>">
-	                    <?php $relatedPosts->title(25); ?>
-	                </a>
-	            </div>	
-	        <?php endwhile; ?>	
-    </div>	 
+		    <div class="post_related mb-3">    
+		        <h3 class="widget-title">相关文章</h3>
+		        <?php while ($relatedPosts->next()): ?> 
+		            <div class="post_related_list">
+		                <?php
+		                $relatedRawTitle = once_decode_html_entities_deep($relatedPosts->title ?? '', 3);
+		                $relatedTitle = \Typecho\Common::subStr($relatedRawTitle, 0, 25, '...');
+		                ?>
+		                <a href="<?php $relatedPosts->permalink(); ?>" class="" title="<?php echo once_esc_attr($relatedRawTitle); ?>">
+		                    <?php echo once_esc_html($relatedTitle); ?>
+		                </a>
+		            </div>	
+		        <?php endwhile; ?>	
+	    </div>	 
     <?php endif; ?>	
     <?php $this->need('comments.php'); ?>
 </div><!-- #main-->

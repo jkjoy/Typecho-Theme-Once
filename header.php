@@ -198,11 +198,12 @@
                 <a href="<?php $this->options->siteUrl(); ?>"><?php _e('首页'); ?></a>
             </li>
             <?php \Widget\Contents\Page\Rows::alloc()->to($pages); ?>
-	            <?php while ($pages->next()): ?>
-	                <li class="menu-item<?php if ($this->is('page', $pages->slug)): ?> current-menu-item<?php endif; ?>">
-	                    <a href="<?php $pages->permalink(); ?>" title="<?php echo once_esc_attr($pages->title ?? ''); ?>"><?php echo once_esc_html($pages->title ?? ''); ?></a>
-	                </li>
-	            <?php endwhile; ?>
+		            <?php while ($pages->next()): ?>
+		                <?php $rawTitle = once_decode_html_entities_deep($pages->title ?? '', 3); ?>
+		                <li class="menu-item<?php if ($this->is('page', $pages->slug)): ?> current-menu-item<?php endif; ?>">
+		                    <a href="<?php $pages->permalink(); ?>" title="<?php echo once_esc_attr($rawTitle); ?>"><?php echo once_esc_html($rawTitle); ?></a>
+		                </li>
+		            <?php endwhile; ?>
             
             <?php $this->widget('Widget_Metas_Category_List')->to($categories); ?>
             <?php if ($categories->have()): ?>

@@ -17,24 +17,29 @@ if (!empty($slides)):
                     </button>
                     <?php endforeach; ?>
                     </div>
-                    <!-- 幻灯片内容 -->
-                    <div class="carousel-inner">
-	                    <?php foreach ($slides as $index => $post): ?>
-	                        <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
-	                            <a class="banlist" href="<?php echo once_esc_url($post['permalink'] ?? ''); ?>">
-	                            <?php $result = get_post_thumbnail($post);$thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail']; ?>
-	                            <img src="<?php echo once_esc_url($thumbnail); ?>" 
-	                             alt="<?php echo once_esc_attr($post['title'] ?? ''); ?>" 
-	                             decoding="async" 
-	                             class="post-images lazyload"
-	                             loading="lazy"
-	                             data-src="<?php echo once_esc_url($thumbnail); ?>"
-	                             onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';" />
-	                        <h2><?php echo once_esc_html($post['title'] ?? ''); ?></h2>
-	                        <i>置顶精彩</i>
-	                    </a>
-	                </div>
-	                <?php endforeach; ?>
+	                    <!-- 幻灯片内容 -->
+	                    <div class="carousel-inner">
+		                    <?php foreach ($slides as $index => $post): ?>
+		                        <?php
+		                        $rawTitle = once_decode_html_entities_deep($post['title'] ?? '', 3);
+		                        $safeTitleAttr = once_esc_attr($rawTitle);
+		                        $safeTitleHtml = once_esc_html($rawTitle);
+		                        ?>
+		                        <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
+		                            <a class="banlist" href="<?php echo once_esc_url($post['permalink'] ?? ''); ?>">
+		                            <?php $result = get_post_thumbnail($post);$thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail']; ?>
+		                            <img src="<?php echo once_esc_url($thumbnail); ?>" 
+		                             alt="<?php echo $safeTitleAttr; ?>" 
+		                             decoding="async" 
+		                             class="post-images lazyload"
+		                             loading="lazy"
+		                             data-src="<?php echo once_esc_url($thumbnail); ?>"
+		                             onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';" />
+		                        <h2><?php echo $safeTitleHtml; ?></h2>
+		                        <i>置顶精彩</i>
+		                    </a>
+		                </div>
+		                <?php endforeach; ?>
             </div>          
             <!-- 控制按钮 -->
             <?php if (count($slides) > 1): ?>
@@ -80,15 +85,16 @@ if ($midCenter) {
             $result = get_post_thumbnail($post);
             $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
             
-	            // 构建文章链接
-	            $permalink = Typecho_Router::url('post', array('cid' => $post['cid']), $this->options->index);
-	            $safePermalink = once_esc_url($permalink);
-	            $safeTitleAttr = once_esc_attr($post['title'] ?? '');
-	            $safeTitleHtml = once_esc_html($post['title'] ?? '');
-	            $safeCategoryHtml = once_esc_html($post['category_name'] ?? '');
-	            $safeThumb = once_esc_url($thumbnail);
-	            
-	            // 输出HTML
+		            // 构建文章链接
+		            $permalink = Typecho_Router::url('post', array('cid' => $post['cid']), $this->options->index);
+		            $safePermalink = once_esc_url($permalink);
+		            $rawTitle = once_decode_html_entities_deep($post['title'] ?? '', 3);
+		            $safeTitleAttr = once_esc_attr($rawTitle);
+		            $safeTitleHtml = once_esc_html($rawTitle);
+		            $safeCategoryHtml = once_esc_html($post['category_name'] ?? '');
+		            $safeThumb = once_esc_url($thumbnail);
+		            
+		            // 输出HTML
 	            echo '<a class="zt_list" href="' . $safePermalink . '" title="' . $safeTitleAttr . '">';
 	            echo '<img src="' . $safeThumb . '" decoding="async" loading="lazy" class="post-images-c lazyload" data-src="' . $safeThumb . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
 	            echo '<h3>' . $safeTitleHtml . '</h3>';
@@ -125,15 +131,16 @@ if ($midRight) {
         $result = get_post_thumbnail($rightPost);
         $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
         
-	        // 构建文章链接
-	        $permalink = Typecho_Router::url('post', array('cid' => $rightPost['cid']), $this->options->index);
-	        $safePermalink = once_esc_url($permalink);
-	        $safeTitleAttr = once_esc_attr($rightPost['title'] ?? '');
-	        $safeTitleHtml = once_esc_html($rightPost['title'] ?? '');
-	        $safeCategoryHtml = once_esc_html($rightPost['category_name'] ?? '');
-	        $safeThumb = once_esc_url($thumbnail);
-	        
-	        // 输出HTML
+		        // 构建文章链接
+		        $permalink = Typecho_Router::url('post', array('cid' => $rightPost['cid']), $this->options->index);
+		        $safePermalink = once_esc_url($permalink);
+		        $rawTitle = once_decode_html_entities_deep($rightPost['title'] ?? '', 3);
+		        $safeTitleAttr = once_esc_attr($rawTitle);
+		        $safeTitleHtml = once_esc_html($rawTitle);
+		        $safeCategoryHtml = once_esc_html($rightPost['category_name'] ?? '');
+		        $safeThumb = once_esc_url($thumbnail);
+		        
+		        // 输出HTML
 	        echo '<a class="gglb" href="' . $safePermalink . '" title="' . $safeTitleAttr . '">';
 	        echo '<img src="' . $safeThumb . '" decoding="async" loading="lazy" class="post-images-r lazyload" data-src="' . $safeThumb . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
 	        echo '<div class="gg_txt">
