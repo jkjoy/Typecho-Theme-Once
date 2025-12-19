@@ -57,11 +57,16 @@ if (!empty($slides)):
 				    $midCenter = $this->options->midCenter;
 				    $midRight = $this->options->midRight;
 				    
-				    // 获取数据库实例
-				    $db = Typecho_Db::get();
-				    ?>
-				    <div class="col-lg-2 none_992">
-				    <?php
+					    // 获取数据库实例
+					    $db = Typecho_Db::get();
+					    $contentsWidget = null;
+					    try {
+					        $contentsWidget = Typecho_Widget::widget('Widget_Abstract_Contents');
+					    } catch (Exception $e) {
+					    }
+					    ?>
+					    <div class="col-lg-2 none_992">
+					    <?php
 				    // 中间展示（分类面板）
 				    if ($midCenter) {
 				        $midCenterID = intval($midCenter);
@@ -84,14 +89,24 @@ if (!empty($slides)):
 				            foreach ($centerPosts as $post) {
 				                // 获取缩略图
 				                $result = get_post_thumbnail($post);
-				                $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
-				                
-				                // 构建文章链接
-				                $permalink = Typecho_Router::url('post', array('cid' => $post['cid']), $this->options->index);
-				                $safePermalink = once_esc_url($permalink);
-				                $rawTitle = once_decode_html_entities_deep($post['title'] ?? '', 3);
-				                $safeTitleAttr = once_esc_attr($rawTitle);
-				                $safeTitleHtml = once_esc_html($rawTitle);
+					                $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
+					                
+					                // 构建文章链接
+					                $permalink = '';
+					                if ($contentsWidget) {
+					                    try {
+					                        $tempPost = $contentsWidget->filter($post);
+					                        $permalink = (string)($tempPost['permalink'] ?? '');
+					                    } catch (Exception $e) {
+					                    }
+					                }
+					                if ($permalink === '') {
+					                    $permalink = \Typecho\Router::url('post', $post, $this->options->index);
+					                }
+					                $safePermalink = once_esc_url($permalink);
+					                $rawTitle = once_decode_html_entities_deep($post['title'] ?? '', 3);
+					                $safeTitleAttr = once_esc_attr($rawTitle);
+					                $safeTitleHtml = once_esc_html($rawTitle);
 				                $safeCategoryHtml = once_esc_html($post['category_name'] ?? '');
 				                $safeThumb = once_esc_url($thumbnail);
 				                
@@ -131,14 +146,24 @@ if (!empty($slides)):
 				        if ($rightPost) {
 				            // 获取缩略图
 				            $result = get_post_thumbnail($rightPost);
-				            $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
-				            
-				            // 构建文章链接
-				            $permalink = Typecho_Router::url('post', array('cid' => $rightPost['cid']), $this->options->index);
-				            $safePermalink = once_esc_url($permalink);
-				            $rawTitle = once_decode_html_entities_deep($rightPost['title'] ?? '', 3);
-				            $safeTitleAttr = once_esc_attr($rawTitle);
-				            $safeTitleHtml = once_esc_html($rawTitle);
+					            $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
+					            
+					            // 构建文章链接
+					            $permalink = '';
+					            if ($contentsWidget) {
+					                try {
+					                    $tempPost = $contentsWidget->filter($rightPost);
+					                    $permalink = (string)($tempPost['permalink'] ?? '');
+					                } catch (Exception $e) {
+					                }
+					            }
+					            if ($permalink === '') {
+					                $permalink = \Typecho\Router::url('post', $rightPost, $this->options->index);
+					            }
+					            $safePermalink = once_esc_url($permalink);
+					            $rawTitle = once_decode_html_entities_deep($rightPost['title'] ?? '', 3);
+					            $safeTitleAttr = once_esc_attr($rawTitle);
+					            $safeTitleHtml = once_esc_html($rawTitle);
 				            $safeCategoryHtml = once_esc_html($rightPost['category_name'] ?? '');
 				            $safeThumb = once_esc_url($thumbnail);
 				            
