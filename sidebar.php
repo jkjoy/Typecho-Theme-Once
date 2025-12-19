@@ -79,74 +79,73 @@ $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&
 </div>
 <?php
 $sidebarBlock = !empty($this->options->sidebarBlock) ? (array)$this->options->sidebarBlock : array();
+
+// 侧边栏数量设置（主题设置项）
+$recentPostsCount = isset($this->options->recentarticle) ? intval($this->options->recentarticle) : 3;
+if ($recentPostsCount < 1) $recentPostsCount = 3;
+$hotPostsCount = isset($this->options->hotarticle) ? intval($this->options->hotarticle) : 5;
+if ($hotPostsCount < 1) $hotPostsCount = 5;
+$hotTagsCount = isset($this->options->hottags) ? intval($this->options->hottags) : 20;
+if ($hotTagsCount < 1) $hotTagsCount = 20;
 ?>
 <?php if (in_array('ShowRecentPosts', $sidebarBlock)): ?>
-    <ul class="author_post">
-    <?php
-        // 直接使用数据库查询获取最近文章，避免与其他Widget冲突
-        try {
-            $recentPosts = $db->fetchAll($db->select()
-                ->from('table.contents')
-                ->where('type = ? AND status = ?', 'post', 'publish')
-                ->order('created', Typecho_Db::SORT_DESC)
-                ->limit(3)
-            );
-            
-            if (!empty($recentPosts)):
-                foreach ($recentPosts as $post):
-                    try {
-                        // 使用Widget_Abstract_Contents处理文章数据，确保获取正确的链接等
-                        $temp_post = Typecho_Widget::widget('Widget_Abstract_Contents')->filter($post);
-                        $result = get_post_thumbnail($post);
-                        $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
-                        $title = isset($temp_post['title']) ? htmlspecialchars($temp_post['title']) : '';
-                        $permalink = isset($temp_post['permalink']) ? htmlspecialchars($temp_post['permalink']) : '#';
-                        $commentsNum = isset($temp_post['commentsNum']) ? intval($temp_post['commentsNum']) : 0;
-        ?>
-            <li>
-                <img width="400" height="280" src="<?php echo htmlspecialchars($thumbnail); ?>"
+	    <ul class="author_post">
+<?php
+    try {
+        // 获取指定用户的最近文章
+        $recentPosts = Typecho_Widget::widget('Widget_Contents_Post_Recent', 'pageSize=' . $recentPostsCount . '&uid=' . $userId);
+        if ($recentPosts && $recentPosts->have()):
+            while ($recentPosts->next()):
+                $result = get_post_thumbnail($recentPosts);
+                $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
+                $commentsNum = intval($recentPosts->commentsNum);
+                $title = htmlspecialchars($recentPosts->title);
+            ?>
+                <li>
+                    <img width="400" height="280" src="<?php echo htmlspecialchars($thumbnail); ?>"
                          data-src="<?php echo htmlspecialchars($thumbnail); ?>"
                          class="thumbnail lazyload"
                          alt="<?php echo $title; ?>"
                          decoding="async" loading="lazy"
-                         onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';" 
-                         />
-                <div class="author_title">
-                    <h4><a href="<?php echo $permalink; ?>" class="stretched-link"><?php echo $title; ?></a></h4>
-                    <p><?php echo $commentsNum; ?> 条留言</p>
-                </div>
-            </li>
-        <?php
-                    } catch (Exception $e) {
-                        continue; // 跳过处理有问题的文章
-                    }
-                endforeach;
-            else:
-        ?>
+                         onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';"
+                    />
+                    <div class="author_title">
+                        <h4>
+                            <a href="<?php $recentPosts->permalink(); ?>" class="stretched-link">
+                                <?php echo $title; ?>
+                            </a>
+                        </h4>
+                        <p><?php echo $commentsNum; ?> 条留言</p>
+                    </div>
+                </li>
+            <?php
+            endwhile;
+        else:
+            ?>
             <li>暂无最近文章</li>
-        <?php 
-            endif;
-        } catch (Exception $e) {
-            echo '<li>获取文章失败</li>';
-        }
-        ?>
-    </ul>
+            <?php
+        endif;
+    } catch (Exception $e) {
+        echo '<li>获取文章失败</li>';
+    }
+?>
+	    </ul>
 </div>
 <?php endif; ?>
 
 <!-- 热门文章 -->
 <?php if (in_array('ShowHotPosts', $sidebarBlock)): ?>
     <?php
-    try {
-        $hotPosts = $db->fetchAll($db->select()
-            ->from('table.contents')
-            ->where('type = ? AND status = ?', 'post', 'publish')
-            ->order('commentsNum', Typecho_Db::SORT_DESC)
-            ->limit(5)
-        );
-    } catch (Exception $e) {
-        $hotPosts = array();
-    }
+	    try {
+	        $hotPosts = $db->fetchAll($db->select()
+	            ->from('table.contents')
+	            ->where('type = ? AND status = ?', 'post', 'publish')
+	            ->order('commentsNum', Typecho_Db::SORT_DESC)
+	            ->limit($hotPostsCount)
+	        );
+	    } catch (Exception $e) {
+	        $hotPosts = array();
+	    }
 
     if (!empty($hotPosts)):
     ?>
@@ -223,12 +222,12 @@ $sidebarBlock = !empty($this->options->sidebarBlock) ? (array)$this->options->si
 
 <!-- 热门标签 -->
 <?php if (in_array('ShowTags', $sidebarBlock)): ?>
-    <?php
-    // 获取热门标签
-    $tags = \Widget\Metas\Tag\Cloud::alloc('sort=count&desc=1&limit=20');
-    if ($tags->have()):
-    ?>
-        <aside id="hot_tags-2" class="widget widget_hot_tags">
+	    <?php
+	    // 获取热门标签
+	    $tags = \Widget\Metas\Tag\Cloud::alloc('sort=count&desc=1&limit=' . $hotTagsCount);
+	    if ($tags->have()):
+	    ?>
+	        <aside id="hot_tags-2" class="widget widget_hot_tags">
             <h3 class="widget-title">热门标签</h3>
             <div class="tagcloud">
                 <?php while ($tags->next()): ?>

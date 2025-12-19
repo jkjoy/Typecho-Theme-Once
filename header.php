@@ -12,6 +12,7 @@
             'tag'      => _t('标签 %s 下的文章'),
             'author'   => _t('%s 发布的文章')
         ], '', ' - '); ?><?php $this->options->title(); ?> | <?php $this->options->description(); ?></title>
+    <meta name="description" content="<?php $this->options->description(); ?>" />
     <?php if ($this->options->faviconUrl): ?>
     <link rel="icon" href="<?php $this->options->faviconUrl(); ?>" type="image/x-icon" />
     <?php else: ?>
@@ -23,7 +24,7 @@
     <?php endif; ?>
     <!-- 使用url函数转换相关路径 -->
     <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/bootstrap.min.css'); ?>">
-    <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/bifont/bootstrap-icons.css'); ?>">
+    <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/bootstrap-icons.css'); ?>">
     <script type="text/javascript" src="<?php $this->options->themeUrl('assets/js/jquery.min.js'); ?>" id="jquery-min-js"></script>
     <!-- Dark mode config (read by assets/js/main.js) -->
     <script>
@@ -60,6 +61,13 @@
     </script>
 <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/style.css'); ?>">
 <script src="<?php $this->options->themeUrl('assets/js/main.js'); ?>" defer></script>
+<?php if (isset($this->options->lxgw) && $this->options->lxgw == '1'): ?>
+<style>
+    body, button, input, select, textarea {
+        font-family: 'LXGW', sans-serif !important;
+    }
+</style>
+<?php endif; ?>
 </head>
 <body class="home blog">
 <header class="header sticky-top">

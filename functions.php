@@ -1,26 +1,24 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
-
+require_once __DIR__ . '/partials/backup.php';
 function themeConfig($form)
-{
+{   
     echo '<style>.typecho-page-title h2 {font-weight: 600;color: #737373;}.typecho-page-title h2:before {content: "#";margin-right: 6px;color:#00b2ff; font-size: 20px;font-weight: 600;}.themeConfig h3 {color: #737373;font-size: 20px;}.themeConfig h3:before {content: "[";margin-right: 5px;color:#00b2ff;font-size: 25px;}.themeConfig h3:after {content: "]";margin-left: 5px;color: #00b2ff;font-size: 25px;}.info{border: 1px solid #4d75b3;padding: 20px;margin: -15px 10px 25px 0;background: #ffffff;border-radius: 5px;color: #0984E3;}.info a{color: #ff004c;}</style>';
-    // 直接在主题设置页面调用更新检查
     themeAutoUpgradeNotice();
-    echo '<span class="themeConfig"><h3>博客设置</h3></span>';
     $logoUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'logoUrl',
         null,
         null,
-        _t('站点 LOGO 地址'),
-        _t('在这里填入一个图片 URL 地址, 以在网站标题前加上一个 LOGO')
+        _t('<span class="themeConfig"><h3>博客设置</h3></span>站点 LOGO 地址'),
+        _t('图片 URL 地址, 以在网站标题前显示 LOGO')
     );
     $form->addInput($logoUrl);
     $faviconUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'faviconUrl',
         null,
         null,
-        _t('站点 favicon 地址'),
-        _t('在这里填入一个图片 URL 地址, 以在浏览器标签页的网站标题前加上一个 favicon')
+        _t('站点 Favicon 地址'),
+        _t('图片 URL 地址, 以显示浏览器标签页 Favicon')
     );
     $form->addInput($faviconUrl); 
     $thumbUrl = new \Typecho\Widget\Helper\Form\Element\Text(
@@ -43,6 +41,8 @@ function themeConfig($form)
         '选择站点外观模式。'
     );
     $form->addInput($darkMode);
+    $lxgw = new Typecho_Widget_Helper_Form_Element_Radio('lxgw', ['0' => _t('默认字体'), '1' => _t('霞鹜文楷')], '0', _t('选择字体'), _t('选择站点字体'));
+    $form->addInput($lxgw);
     $cnavatar = new Typecho_Widget_Helper_Form_Element_Text('cnavatar', NULL, NULL, _t('Gravatar镜像'), _t('默认https://cravatar.cn/avatar/'));
     $form->addInput($cnavatar);
     $slidePosts = new Typecho_Widget_Helper_Form_Element_Text(
@@ -73,9 +73,26 @@ function themeConfig($form)
             'ShowOther'          => _t('显示其它杂项')
         ],
         ['ShowRecentPosts', 'ShowRecentComments', 'ShowHotPosts', 'ShowTags', 'ShowOther'],
-        _t('<span class="themeConfig"><h3>侧边栏设置</h3></span>侧边栏显示')
+        _t('<span class="themeConfig"><h3>侧边栏设置</h3></span><div class="info">侧边栏显示</div>')
     );
     $form->addInput($sidebarBlock->multiMode());
+    $recentarticle = new Typecho_Widget_Helper_Form_Element_Text('recentarticle', NULL, '3', _t('最新文章数量'), _t('默认数量3，侧边栏最新文章模块显示的文章数量'));
+    $recentarticle->input->setAttribute('class', 'w-10');
+    $form->addInput($recentarticle->addRule('isInteger', _t('请填写整数数字')));
+
+    $hotarticle = new Typecho_Widget_Helper_Form_Element_Text('hotarticle', NULL, '5', _t('热门文章数量'), _t('默认数量5，侧边栏热门文章模块显示的文章数量'));
+    $hotarticle->input->setAttribute('class', 'w-10');
+    $form->addInput($hotarticle->addRule('isInteger', _t('请填写整数数字')));
+
+    $hottags = new Typecho_Widget_Helper_Form_Element_Text('hottags', NULL, '20', _t('热门标签数量'), _t('默认数量20，侧边栏热门标签模块显示的标签数量'));
+    $hottags->input->setAttribute('class', 'w-10');
+    $form->addInput($hottags->addRule('isInteger', _t('请填写整数数字')));
+    $friend = new Typecho_Widget_Helper_Form_Element_Textarea('friend', NULL, NULL, _t('<span class="themeConfig"><h3>评论相关设置</h3></span><div class="info">好友认证</div>好友邮箱'), _t('一行一个邮箱地址,用于评论区好友等级认证'));
+    $form->addInput($friend);
+    // 主题备份功能钩子
+    if (function_exists('once_render_theme_backup_section')) {
+        once_render_theme_backup_section();
+    }
 }
 
 /**
@@ -497,65 +514,76 @@ function commentApprove($widget, $email = NULL)
     );
     if (empty($email)) return $result;       
     $result['state'] = 1;
-
+    $emailLower = strtolower(trim((string)$email));
+    $friendRaw = (string)(Helper::options()->friend ?? '');
+    $friendList = preg_split('/[,\s]+/u', strtolower(trim($friendRaw)), -1, PREG_SPLIT_NO_EMPTY);
+    $isFriend = ($emailLower !== '' && !empty($friendList) && in_array($emailLower, $friendList, true)); 
     if ($widget->authorId == $widget->ownerId) {      
         $result['isAuthor'] = 1;//」
         $result['userLevel'] = '「博主」<i class="bi bi-award-fill"></i>';
         $result['userDesc'] = '本站站长';
-        $result['bgColor'] = '#FFD67A';
+        $result['bgColor'] = '#ef6762ff';
         $result['commentNum'] = 999;
-    }  else {
-        //数据库获取
-        $db = Typecho_Db::get();
-        //获取评论条数
-        $commentNumSql = $db->fetchAll($db->select(array('COUNT(cid)'=>'commentNum'))
-            ->from('table.comments')
-            ->where('mail = ?', $email));
-        $commentNum = $commentNumSql[0]['commentNum'];    
-        //获取友情链接 - 检查表是否存在
-        $linkSql = null;
+    } else {
         try {
-            // 尝试直接查询表，如果表不存在会抛出异常
+            //数据库获取
+            $db = Typecho_Db::get();
+            //获取评论条数
+            $commentNumSql = $db->fetchAll($db->select(array('COUNT(cid)'=>'commentNum'))
+                ->from('table.comments')
+                ->where('mail = ?', $email));
+            $commentNum = $commentNumSql[0]['commentNum'];    
+            //获取友情链接
             $linkSql = $db->fetchAll($db->select()->from('table.links')
-                ->where('user = ?', $email));
-        } catch (Exception $e) {
-            // 如果表不存在或查询失败，忽略错误，继续执行
-            $linkSql = null;
-        }
-        //等级判定
-        if($commentNum==1){
-            $result['userLevel'] = '「初见」<i class="bi bi-0-circle"></i>';
-            $result['bgColor'] = '#999999';
-            $userDesc = '人生一大步！';
-        } else {
-            if ($commentNum<10 && $commentNum>1) {
-                $result['userLevel'] = '「初识」<i class="bi bi-1-circle"></i>';
+                ->where('user = ?',$email));       
+            //等级判定
+            if($commentNum==1){
+                $result['userLevel'] = '「初见」<i class="bi bi-0-circle"></i>';
                 $result['bgColor'] = '#999999';
-            }elseif ($commentNum<20 && $commentNum>=10) {
-                $result['userLevel'] = '「相识」<i class="bi bi-2-circle"></i>';
-                $result['bgColor'] = '#A0DAD0';
-            }elseif ($commentNum<40 && $commentNum>=20) {
-                $result['userLevel'] = '「熟识」<i class="bi bi-3-circle"></i>';
-                $result['bgColor'] = '#A0DAD0';
-            }elseif ($commentNum<80 && $commentNum>=40) {
-                $result['userLevel'] = '「好友」<i class="bi bi-4-circle"></i>';
-                $result['bgColor'] = '#A0DAD0';
-            }elseif ($commentNum<160 && $commentNum>=80) {
-                $result['userLevel'] = '「知己」<i class="bi bi-5-circle"></i>';
-                $result['bgColor'] = '#A0DAD0';
-            }elseif ($commentNum>=160) {
-                $result['userLevel'] = '「挚友」<i class="bi bi-6-circle"></i>';
-                $result['bgColor'] = '#A0DAD0';
+                $userDesc = '人生一大步！';
+            } else {
+                if ($commentNum<10 && $commentNum>1) {
+                    $result['userLevel'] = '「初识」<i class="bi bi-1-circle"></i>';
+                    $result['bgColor'] = '#999999';
+                }elseif ($commentNum<20 && $commentNum>=10) {
+                    $result['userLevel'] = '「相识」<i class="bi bi-2-circle"></i>';
+                    $result['bgColor'] = '#8dc7beff';
+                }elseif ($commentNum<40 && $commentNum>=20) {
+                    $result['userLevel'] = '「熟识」<i class="bi bi-3-circle"></i>';
+                    $result['bgColor'] = '#3ceacdff';
+                }elseif ($commentNum<80 && $commentNum>=40) {
+                    $result['userLevel'] = '「好友」<i class="bi bi-4-circle"></i>';
+                    $result['bgColor'] = '#27ee15ff';
+                }elseif ($commentNum<160 && $commentNum>=80) {
+                    $result['userLevel'] = '「知己」<i class="bi bi-5-circle"></i>';
+                    $result['bgColor'] = '#e7e42dff';
+                }elseif ($commentNum>=160) {
+                    $result['userLevel'] = '「挚友」<i class="bi bi-6-circle"></i>';
+                    $result['bgColor'] = '#fdf000ff';
+                }
+                 $userDesc = '您在本站有'.$commentNum.'条留言！'; 
             }
-             $userDesc = '您在本站有'.$commentNum.'条留言！'; 
+            if($linkSql){
+                $result['userLevel'] = '「博友」';
+                $result['bgColor'] = '#00fd15ff';
+                $userDesc = '🔗'.$linkSql[0]['description'].'&#10;✌️'.$userDesc;
+            }
+            
+            if ($isFriend) {
+                $result['userLevel'] = '「好友」<i class="bi bi-heart-fill"></i>';
+                $result['bgColor'] = '#880097ff';
+                $userDesc = '好基友认证&#10;' . $userDesc;
+            }
+            $result['userDesc'] = $userDesc;
+            $result['commentNum'] = $commentNum;
+        } catch (Exception $e) {
+            error_log('Error in commentApprove function: ' . $e->getMessage());
+            // 设置默认值
+            $result['userLevel'] = '「访客」';
+            $result['bgColor'] = '#999999';
+            $result['userDesc'] = '欢迎留言';
+            $result['commentNum'] = 0;
         }
-        if($linkSql){
-            $result['userLevel'] = '「博友」';
-            $result['bgColor'] = '#21b9bb';
-            $userDesc = '🔗'.$linkSql[0]['description'].'&#10;✌️'.$userDesc;
-        }
-        $result['userDesc'] = $userDesc;
-        $result['commentNum'] = $commentNum;
     } 
     return $result;
 }
@@ -781,101 +809,10 @@ class AttachmentHelper {
     }
 }
 /**
- * 自动检查主题更新
+ * Typecho后台文章标签增强：常用标签快速插入
+ * @author jkjoy
+ * @date 2025-04-25
  */
-function themeAutoUpgradeNotice()
-{
-    // 1. 获取当前主题版本（优先读取 index.php 的 @version 注释）
-    $current_version = '0.0.0';
-    $index_file = __DIR__ . '/index.php';
-    if (is_readable($index_file)) {
-        $index_content = @file_get_contents($index_file);
-        if ($index_content && preg_match('/@version\\s+([0-9]+(?:\\.[0-9]+)*)/i', $index_content, $m)) {
-            $current_version = $m[1];
-        }
-    }
-    // 2. 定义 GitHub API 地址
-    $api_url = 'https://api.github.com/repos/jkjoy/typecho-theme-once/releases/latest';
-    // 3. 设置缓存，避免每次请求都调用 API，减轻服务器压力
-    $cache_dir = __TYPECHO_ROOT_DIR__ . '/usr/cache';
-    $cache_file = $cache_dir . '/once-version.json';
-    $cache_time = 12 * 3600; // 缓存12小时
-    // 确保缓存目录存在
-    if (!file_exists($cache_dir)) {
-        @mkdir($cache_dir, 0755, true);
-    }
-    $latest_version = null;
-    $latest_version_raw = null;
-    $fetch_error = null;
-    // 检查缓存文件是否存在且未过期
-    if (file_exists($cache_file) && (time() - filemtime($cache_file)) < $cache_time) {
-        $cache_data = json_decode(file_get_contents($cache_file), true);
-        if ($cache_data && isset($cache_data['tag_name'])) {
-            $latest_version = $cache_data['tag_name'];
-        }
-    } else {
-        // 缓存过期或不存在，重新请求 API
-        $ctx = stream_context_create([
-            'http' => [
-                'header' => 'User-Agent: Typecho-Theme-Updater', // GitHub API 要求有 User-Agent
-                'timeout' => 10 // 设置超时时间
-            ]
-        ]);
-        $response = @file_get_contents($api_url, false, $ctx);
-        if ($response) {
-            $release_data = json_decode($response, true);
-            if (isset($release_data['tag_name'])) {
-                $latest_version_raw = $release_data['tag_name'];
-                $latest_version = ltrim(trim((string)$latest_version_raw), "vV");
-                // 更新缓存文件
-                $result = file_put_contents($cache_file, json_encode(['tag_name' => $latest_version, 'time' => time()]));
-                // 如果缓存写入失败，记录错误但不影响显示
-                if (!$result) {
-                    error_log('Failed to write upgrade cache to ' . $cache_file);
-                }
-            }
-        } else {
-            // API请求失败，记录错误
-            $fetch_error = 'Failed to fetch release data from ' . $api_url;
-            error_log($fetch_error);
-            // 如果有旧缓存，使用旧缓存数据
-            if (file_exists($cache_file)) {
-                $cache_data = json_decode(file_get_contents($cache_file), true);
-                if ($cache_data && isset($cache_data['tag_name'])) {
-                    $latest_version = $cache_data['tag_name'];
-                }
-            }
-        }
-    }
-
-    // 兼容缓存中可能存在的 v 前缀
-    if ($latest_version) {
-        $latest_version = ltrim(trim((string)$latest_version), "vV");
-    }
-
-    // 4. 输出检查结果（无更新也给出状态，避免误以为“不可用”）
-    echo '<span class="themeConfig"><h3>主题更新</h3></span>';
-    if (!$latest_version) {
-        echo '<div class="info">更新检查失败：无法获取 GitHub 最新版本。'
-            . (ini_get('allow_url_fopen') ? '' : '（当前 PHP 已关闭 allow_url_fopen）')
-            . '<br>你可以手动前往：<a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">releases</a></div>';
-        return;
-    }
-
-    if (version_compare($current_version, $latest_version, '<')) {
-        echo '<div class="info">发现新版本 ' . $latest_version . '，您当前使用的是 ' . $current_version . '。'
-            . '建议立即更新以获得最新功能和安全性修复。'
-            . '<a href="https://github.com/jkjoy/typecho-theme-once/releases/latest" target="_blank">查看更新</a>'
-            . '<a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">立即下载</a>'
-            . '</div>';
-        return;
-    }
-
-    echo '<div class="info">当前已是最新版本（当前版本：' . $current_version . '，GitHub版本：' . $latest_version . '）。'
-        . '<a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">查看 releases</a>'
-        . '</div>';
-}
-
 Typecho_Plugin::factory('admin/write-post.php')->bottom = array('tagshelper', 'tagslist');
 class tagshelper{
     public static function tagslist(){   
@@ -893,5 +830,128 @@ $i++;
 ?></ul></div>');
   });</script>
 <?php
+    }
+}
+
+/**
+ * 自动检查主题更新
+ */
+function once_normalize_version($version)
+{
+    $version = trim((string)$version);
+    $version = ltrim($version, "vV \t\n\r\0\x0B");
+
+    if (preg_match('/^([0-9]+(?:\\.[0-9]+){1,3})/', $version, $m)) {
+        return $m[1];
+    }
+
+    return $version;
+}
+
+function once_get_theme_version_from_index()
+{
+    // 兼容 Windows/自定义目录：直接从当前主题目录读取 index.php 注释中的 @version
+    $indexFile = dirname(__DIR__) . '/index.php';
+    if (!is_file($indexFile)) {
+        // 兜底：按 Typecho 目录规则拼接
+        $theme = (string)Helper::options()->theme;
+        if ($theme !== '') {
+            $fallback = rtrim(__TYPECHO_ROOT_DIR__, '/\\') . rtrim(__TYPECHO_THEME_DIR__, '/\\') . '/' . $theme . '/index.php';
+            if (is_file($fallback)) {
+                $indexFile = $fallback;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    $content = @file_get_contents($indexFile);
+    if ($content === false) {
+        return null;
+    }
+
+    if (preg_match('/@version\\s+([^\\s\\*]+)/i', $content, $m)) {
+        $version = once_normalize_version($m[1]);
+        return $version !== '' ? $version : null;
+    }
+
+    return null;
+}
+
+function themeAutoUpgradeNotice()
+{
+    // 1. 从 index.php 注释读取当前主题版本（@version）
+    $current_version = once_get_theme_version_from_index();
+    if (empty($current_version)) {
+        return;
+    }
+
+    // 2. 定义 GitHub API 地址
+    $api_url = 'https://api.github.com/repos/jkjoy/typecho-theme-once/releases/latest';
+
+    // 3. 设置缓存，避免每次请求都调用 API，减轻服务器压力
+    $cache_dir = __TYPECHO_ROOT_DIR__ . '/usr/cache';
+    $cache_file = $cache_dir . '/once-version.json';
+    $cache_time = 12 * 3600; // 缓存12小时
+
+    // 确保缓存目录存在
+    if (!file_exists($cache_dir)) {
+        @mkdir($cache_dir, 0755, true);
+    }
+
+    $latest_version = null;
+    
+    // 检查缓存文件是否存在且未过期
+    if (file_exists($cache_file) && (time() - filemtime($cache_file)) < $cache_time) {
+        $cache_data = json_decode(file_get_contents($cache_file), true);
+        if ($cache_data && isset($cache_data['tag_name'])) {
+            $latest_version = once_normalize_version($cache_data['tag_name']);
+        }
+    } else {
+        // 缓存过期或不存在，重新请求 API
+        $ctx = stream_context_create([
+            'http' => [
+                'header' => 'User-Agent: Typecho-Theme-Updater', // GitHub API 要求有 User-Agent
+                'timeout' => 10 // 设置超时时间
+            ]
+        ]);
+        
+        $response = @file_get_contents($api_url, false, $ctx);
+
+        if ($response) {
+            $release_data = json_decode($response, true);
+            if (isset($release_data['tag_name'])) {
+                $latest_version = once_normalize_version($release_data['tag_name']);
+                // 更新缓存文件
+                $result = file_put_contents($cache_file, json_encode(['tag_name' => $latest_version, 'time' => time()]));
+                // 如果缓存写入失败，记录错误但不影响显示
+                if (!$result) {
+                    error_log('Failed to write upgrade cache to ' . $cache_file);
+                }
+            }
+        } else {
+            // API请求失败，记录错误
+            error_log('Failed to fetch release data from ' . $api_url);
+            // 如果有旧缓存，使用旧缓存数据
+            if (file_exists($cache_file)) {
+                $cache_data = json_decode(file_get_contents($cache_file), true);
+                if ($cache_data && isset($cache_data['tag_name'])) {
+                    $latest_version = once_normalize_version($cache_data['tag_name']);
+                }
+            }
+        }
+    }
+    // 4. 如果获取到了最新版本，则进行比较
+    if ($latest_version && version_compare(once_normalize_version($current_version), once_normalize_version($latest_version), '<')) {
+        
+        $notice_html = '
+        <span class="themeConfig"><h3>主题更新</h3>
+            <div class="info">发现新版本 ' . $latest_version . '，您当前使用的是 ' . $current_version . '。建议立即更新以获得最新功能和安全性修复。
+                <a href="https://github.com/jkjoy/typecho-theme-once/releases/latest" target="_blank">查看更新</a>
+                <a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">立即下载</a>
+            </div>';
+        echo $notice_html;
     }
 }
