@@ -688,3 +688,35 @@ img{border:0;max-width:100%;height:auto;}
 .dark .toast.warning {
     background-color: rgba(255, 193, 7, 0.9);
 }
+.post-images {
+    width: 700px;
+    height: 400px;
+    object-fit: cover;
+    object-position: center;
+}
+.post-images-c {
+    width: 300px;
+    height: 300px;
+    object-fit: cover;
+    object-position: center;
+}
+.post-images-r {
+    width: 300px;
+    height: 400px;
+    object-fit: cover;
+    object-position: center;
+}
+/* 添加以下样式使指示器变为圆形 */
+.carousel-indicators button {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;  /* 这行是关键，使元素变为圆形 */
+    padding: 0;
+    margin: 0 5px;
+    border: none;
+    background-color: hsl(0, 0.00%, 100.00%);
+    transition: background-color 0.3s ease;
+}
+.carousel-indicators button.active {
+    background-color: rgba(0, 0, 0, 0.8);
+}
