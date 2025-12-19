@@ -3,10 +3,12 @@
 <?php 
 // 获取父评论链接
 function getPermalinkFromCoid($coid) {
+    $coid = (int)$coid;
     $db = Typecho_Db::get();
     $row = $db->fetchRow($db->select('author')->from('table.comments')->where('coid = ?', $coid));
     if (empty($row)) return '';
-    return '<a href="#comment-' . $coid . '">@' . $row['author'] . '</a> ';
+    $author = isset($row['author']) ? once_esc_html($row['author']) : '';
+    return '<a href="#comment-' . $coid . '">@' . $author . '</a> ';
 }
 ?>
 <div class="post_comment" id="post_comment_anchor">
@@ -33,18 +35,18 @@ function getPermalinkFromCoid($coid) {
                     <footer class="comment-meta">
                         <div class="comment-author vcard">
                             <?php echo $comments->gravatar('40', ''); ?>
-                            <b class="fn">
-                            <?php if ($comments->url): ?>
-                                <a href="<?php echo $comments->url ?>" target="_blank" rel="external nofollow" title="<?php echo $commentApprove['userDesc']; ?>">
-                                    <?php echo $comments->author; ?>
-                                </a>
-                            <?php else: ?>
-                                <?php echo $comments->author; ?>  
-                            <?php endif; ?>                            
-                            <span style="margin-left: 10px;font-size:10px;color:<?php echo $commentApprove['bgColor']; ?>;">
-                             <?php echo $commentApprove['userLevel']; ?>
-                            </span>
-                            </b><span class="says">说道：</span>
+	                            <b class="fn">
+	                            <?php if ($comments->url): ?>
+	                                <a href="<?php echo once_esc_url($comments->url); ?>" target="_blank" rel="external nofollow" title="<?php echo once_esc_attr($commentApprove['userDesc'] ?? ''); ?>">
+	                                    <?php echo once_esc_html($comments->author); ?>
+	                                </a>
+	                            <?php else: ?>
+	                                <?php echo once_esc_html($comments->author); ?>  
+	                            <?php endif; ?>                            
+	                            <span style="margin-left: 10px;font-size:10px;color:<?php echo once_esc_attr($commentApprove['bgColor'] ?? ''); ?>;">
+	                             <?php echo once_esc_html($commentApprove['userLevel'] ?? ''); ?>
+	                            </span>
+	                            </b><span class="says">说道：</span>
                         </div>
                         <div class="comment-metadata">
                             <a href="<?php $comments->permalink(); ?>" title="<?php $comments->date('Y-m-d H:i'); ?>">
@@ -54,12 +56,12 @@ function getPermalinkFromCoid($coid) {
                             </a>
                         </div><!-- .comment-metadata -->
                     </footer><!-- .comment-meta -->
-                    <div class="comment-content">
-                        <?php if ($comments->parent) {echo getPermalinkFromCoid($comments->parent);} $comments->content(); ?>
-                    </div><!-- .comment-content -->
-                    <div class="reply">
-                        <a rel="nofollow" class="comment-reply-link" href="javascript:void(0);" data-coid="<?php echo $comments->coid; ?>">回复</a>
-                    </div>
+	                    <div class="comment-content">
+	                        <?php if ($comments->parent) {echo getPermalinkFromCoid((int)$comments->parent);} $comments->content(); ?>
+	                    </div><!-- .comment-content -->
+	                    <div class="reply">
+	                        <a rel="nofollow" class="comment-reply-link" href="javascript:void(0);" data-coid="<?php echo (int)$comments->coid; ?>">回复</a>
+	                    </div>
                 </article><!-- .comment-body -->
                 <?php if ($comments->children) { ?>
                     <ol class="children">
@@ -115,15 +117,15 @@ function getPermalinkFromCoid($coid) {
                             <a href="<?php $this->options->logoutUrl(); ?>" title="Logout">退出 &raquo;</a>
                         </p>
                         <?php else: ?>
-                        <p class="comment-form-author">
-                            <input placeholder="称呼 *" type="text" name="author" id="author" class="text" value="<?php echo isset($_COOKIE['__typecho_remember_author']) ? htmlspecialchars($_COOKIE['__typecho_remember_author']) : ''; ?>" required />
-                        </p>
-                        <p class="comment-form-email">
-                            <input placeholder="邮箱<?php if ($this->options->commentsRequireMail): ?> *<?php endif; ?>" type="email" name="mail" id="mail" class="text" value="<?php echo isset($_COOKIE['__typecho_remember_mail']) ? htmlspecialchars($_COOKIE['__typecho_remember_mail']) : ''; ?>"<?php if ($this->options->commentsRequireMail): ?> required<?php endif; ?> />
-                        </p>
-                        <p class="comment-form-url">
-                            <input type="url" name="url" id="url" class="text" placeholder="http(s)://<?php if ($this->options->commentsRequireURL): ?> *<?php endif; ?>" value="<?php echo isset($_COOKIE['__typecho_remember_url']) ? htmlspecialchars($_COOKIE['__typecho_remember_url']) : ''; ?>"<?php if ($this->options->commentsRequireURL): ?> required<?php endif; ?> />
-                        </p>
+	                        <p class="comment-form-author">
+	                            <input placeholder="称呼 *" type="text" name="author" id="author" class="text" value="<?php echo isset($_COOKIE['__typecho_remember_author']) ? once_esc_attr($_COOKIE['__typecho_remember_author']) : ''; ?>" required />
+	                        </p>
+	                        <p class="comment-form-email">
+	                            <input placeholder="邮箱<?php if ($this->options->commentsRequireMail): ?> *<?php endif; ?>" type="email" name="mail" id="mail" class="text" value="<?php echo isset($_COOKIE['__typecho_remember_mail']) ? once_esc_attr($_COOKIE['__typecho_remember_mail']) : ''; ?>"<?php if ($this->options->commentsRequireMail): ?> required<?php endif; ?> />
+	                        </p>
+	                        <p class="comment-form-url">
+	                            <input type="url" name="url" id="url" class="text" placeholder="http(s)://<?php if ($this->options->commentsRequireURL): ?> *<?php endif; ?>" value="<?php echo isset($_COOKIE['__typecho_remember_url']) ? once_esc_attr($_COOKIE['__typecho_remember_url']) : ''; ?>"<?php if ($this->options->commentsRequireURL): ?> required<?php endif; ?> />
+	                        </p>
                         <?php endif; ?>                       
                         <p class="comment-form-comment">
                             <textarea rows="8" cols="50" name="text" id="textarea" class="textarea"  onkeydown="if(event.ctrlKey&&event.keyCode==13){document.getElementById('misubmit').click();return false};"  placeholder="雁过留声,人过留名"  required><?php $this->remember('text'); ?></textarea>

@@ -269,11 +269,10 @@ function get_post_thumbnail($post) {
     );  
     
     if (!$post) return $result;
-    $theme_dir = basename(dirname(__FILE__));
     $content = '';
     if (!empty($post->text)) $content = $post->text;
-    else if (!empty($post->content)) $content = $post->content;
-    else if (method_exists($post, 'content') && is_callable([$post, 'content'])) $content = $post->content();
+    elseif (!empty($post->content)) $content = $post->content;
+    elseif (method_exists($post, 'content') && is_callable([$post, 'content'])) $content = $post->content();
     $images = array();
     if (!empty($content)) {
         preg_match_all('/<img[^>]*src=[\'"]([^\'"]+)[\'"][^>]*>/i', $content, $html_matches);
@@ -304,7 +303,7 @@ function get_post_thumbnail($post) {
         // 只生成首图缩略图，避免一次请求生成多张缩略图导致卡顿
         $cropped_images = array();
         if (!empty($images[0])) {
-            $cropped_images[] = get_thumb($images[0], $theme_dir);
+            $cropped_images[] = get_thumb($images[0]);
         }
         $result['images'] = $images;
         $result['cropped_images'] = $cropped_images;
@@ -321,12 +320,10 @@ function get_post_thumbnail($post) {
  * 生成缩略图
  * 
  * @param string $imgUrl 原始图片URL
- * @param array $options 配置选项
  * @return string 缩略图URL
  */
-function get_thumb($imgUrl, $options) {
-    $theme_dir = basename(dirname(__FILE__));
-    $upload_dir = __DIR__ . '/thumbnails/';
+function get_thumb($imgUrl) {
+    $upload_dir = __TYPECHO_ROOT_DIR__ . '/usr/thumbnails/';
     // 获取默认缩略图URL（用于图片加载失败时）
     $default_thumbnail = Helper::options()->themeUrl . '/assets/img/nopic.svg';
     $custom_thumbnail = Helper::options()->thumbUrl ?? '';
@@ -343,7 +340,7 @@ function get_thumb($imgUrl, $options) {
     // 生成唯一文件名
     $hash = md5($imgUrl);
     $thumbnail_path = $upload_dir . $hash . '.webp';
-    $thumbnail_url = Helper::options()->themeUrl . '/thumbnails/' . $hash . '.webp';
+    $thumbnail_url = Helper::options()->siteUrl . 'usr/thumbnails/' . $hash . '.webp';
     $fail_path = $thumbnail_path . '.fail';
     $lock_path = $thumbnail_path . '.lock';
     $fail_ttl = 6 * 3600; // 失败缓存 6 小时，避免每次请求都阻塞重试
@@ -492,6 +489,87 @@ function get_thumb($imgUrl, $options) {
             @fclose($lock_fp);
         }
     }
+}
+
+/**
+ * 简易文件缓存（主题目录内 cache/）
+ * - 不依赖 Typecho 缓存组件，方便部署
+ * - 写入失败会自动降级为不缓存
+ */
+function once_cache_get($key, $ttl)
+{
+    $ttl = (int)$ttl;
+    if ($ttl <= 0) return null;
+    $dir = __TYPECHO_ROOT_DIR__ . '/usr/cache/';
+    $path = $dir . md5((string)$key) . '.json';
+    if (!is_file($path) || !is_readable($path)) return null;
+    $raw = @file_get_contents($path);
+    if ($raw === false) return null;
+    $payload = json_decode($raw, true);
+    if (!is_array($payload) || !isset($payload['time'])) return null;
+    if ((time() - (int)$payload['time']) > $ttl) return null;
+    return $payload['data'] ?? null;
+}
+
+function once_cache_set($key, $data)
+{
+    $dir = __TYPECHO_ROOT_DIR__ . '/usr/cache/';
+    if (!is_dir($dir)) {
+        if (!@mkdir($dir, 0755, true)) return false;
+    }
+    $path = $dir . md5((string)$key) . '.json';
+    $tmp = $path . '.tmp';
+    $payload = json_encode(['time' => time(), 'data' => $data], JSON_UNESCAPED_UNICODE);
+    if ($payload === false) return false;
+    if (@file_put_contents($tmp, $payload, LOCK_EX) === false) return false;
+    return @rename($tmp, $path);
+}
+
+function once_charset()
+{
+    $charset = 'UTF-8';
+    try {
+        $opt = Helper::options();
+        if (isset($opt->charset) && $opt->charset) $charset = (string)$opt->charset;
+    } catch (Exception $e) {
+    }
+    return $charset ?: 'UTF-8';
+}
+
+function once_esc_html($value)
+{
+    return htmlspecialchars((string)$value, ENT_QUOTES, once_charset());
+}
+
+function once_esc_attr($value)
+{
+    return htmlspecialchars((string)$value, ENT_QUOTES, once_charset());
+}
+
+function once_esc_url($value)
+{
+    $url = trim((string)$value);
+    if ($url === '') return '';
+
+    // 禁止危险 scheme
+    if (preg_match('/^\s*(javascript|data|vbscript):/i', $url)) {
+        return '#';
+    }
+
+    // 允许锚点、相对路径、协议相对
+    $first = $url[0] ?? '';
+    if ($first === '#' || $first === '/' || $first === '?' || strpos($url, '//') === 0) {
+        return once_esc_attr($url);
+    }
+
+    $scheme = @parse_url($url, PHP_URL_SCHEME);
+    if ($scheme) {
+        $scheme = strtolower((string)$scheme);
+        if (!in_array($scheme, ['http', 'https', 'mailto', 'tel'], true)) {
+            return '#';
+        }
+    }
+    return once_esc_attr($url);
 }
 
 /**    

@@ -32,15 +32,15 @@
             <span><?php $this->author(); ?></span>
 		</div>
 		<div class="post_author_r">
-        <div class="post_author_tag">
-            <?php if ($this->tags): ?>
-            <?php foreach ($this->tags as $tag): ?>
-            <em> 
-                <a href="<?php echo $tag['permalink']; ?>"><i class="bi bi-hash"></i><?php echo $tag['name']; ?></a> 
-            </em>
-            <?php endforeach; ?>
-            <?php else: ?>
-            <?php endif; ?>
+	        <div class="post_author_tag">
+	            <?php if ($this->tags): ?>
+	            <?php foreach ($this->tags as $tag): ?>
+	            <em> 
+	                <a href="<?php echo once_esc_url($tag['permalink'] ?? ''); ?>"><i class="bi bi-hash"></i><?php echo once_esc_html($tag['name'] ?? ''); ?></a> 
+	            </em>
+	            <?php endforeach; ?>
+	            <?php else: ?>
+	            <?php endif; ?>
             <em><i class="bi bi-list"></i> <?php $this->category(','); ?></em>
         </div>
 			<div class="post_author_icon">
@@ -48,11 +48,11 @@
                     <i class="bi bi-chat-square-dots-fill"></i>
                     <?php $this->commentsNum('0', '1', '%d'); ?>
                 </a>
-        <?php $likes = $this->fields->likes ? $this->fields->likes : 0; ?>
-				<a href="javascript:;" data-action="ding" data-id="<?php $this->cid(); ?>" class="specsZan ">
-                    <i class="bi bi-hand-thumbs-up-fill"></i>
-                    <small class="count"><?php echo $likes; ?></small>
-				</a>
+	        <?php $likes = $this->fields->likes ? (int)$this->fields->likes : 0; ?>
+					<a href="javascript:;" data-action="ding" data-id="<?php $this->cid(); ?>" class="specsZan ">
+	                    <i class="bi bi-hand-thumbs-up-fill"></i>
+	                    <small class="count"><?php echo $likes; ?></small>
+					</a>
 			</div>
 		</div>
 	</div>
@@ -78,45 +78,45 @@
             $nextThumbnailUrl = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
         ?>
         <div class="next_prev_posts">
-            <div class="prev_next_box nav_previous"<?php if (!$next) echo ' style="width:100%"'; ?>>
-            <?php if ($prev):
-                $prevUrl = Typecho_Router::url('post', $prev, $this->options->index);
-            ?>
-                <a href="<?php echo $prevUrl; ?>" title="<?php echo $prev['title']; ?>" rel="prev" style="background-image: url(<?php echo $prevThumbnailUrl; ?>);">
-                    <div class="prev_next_info">
-                        <small>上一篇</small>
-                        <p><?php echo $prev['title']; ?></p>
-                    </div>
-                </a>
-            <?php else: ?>
+	            <div class="prev_next_box nav_previous"<?php if (!$next) echo ' style="width:100%"'; ?>>
+	            <?php if ($prev):
+	                $prevUrl = Typecho_Router::url('post', $prev, $this->options->index);
+	            ?>
+	                <a href="<?php echo once_esc_url($prevUrl); ?>" title="<?php echo once_esc_attr($prev['title'] ?? ''); ?>" rel="prev" style="background-image: url('<?php echo once_esc_url($prevThumbnailUrl); ?>');">
+	                    <div class="prev_next_info">
+	                        <small>上一篇</small>
+	                        <p><?php echo once_esc_html($prev['title'] ?? ''); ?></p>
+	                    </div>
+	                </a>
+	            <?php else: ?>
           
             <?php endif; ?>
             </div>
-            <div class="prev_next_box nav_next"<?php if (!$prev) echo ' style="width:100%"'; ?>>
-            <?php if ($next):
-                $nextUrl = Typecho_Router::url('post', $next, $this->options->index);
-            ?>
-                <a href="<?php echo $nextUrl; ?>" title="<?php echo $next['title']; ?>" rel="next" style="background-image: url(<?php echo $nextThumbnailUrl; ?>);">
-                    <div class="prev_next_info">
-                        <small>下一篇</small>
-                        <p><?php echo $next['title']; ?></p>
-                    </div>
-                </a>
-            <?php else: ?>
+	            <div class="prev_next_box nav_next"<?php if (!$prev) echo ' style="width:100%"'; ?>>
+	            <?php if ($next):
+	                $nextUrl = Typecho_Router::url('post', $next, $this->options->index);
+	            ?>
+	                <a href="<?php echo once_esc_url($nextUrl); ?>" title="<?php echo once_esc_attr($next['title'] ?? ''); ?>" rel="next" style="background-image: url('<?php echo once_esc_url($nextThumbnailUrl); ?>');">
+	                    <div class="prev_next_info">
+	                        <small>下一篇</small>
+	                        <p><?php echo once_esc_html($next['title'] ?? ''); ?></p>
+	                    </div>
+	                </a>
+	            <?php else: ?>
     
             <?php endif; ?>
             </div>
         </div>
     <?php $this->related(6)->to($relatedPosts); if ($relatedPosts->have()):?>
     <div class="post_related mb-3">    
-        <h3 class="widget-title">相关文章</h3>
-        <?php while ($relatedPosts->next()): ?> 
-            <div class="post_related_list">
-                <a href="<?php $relatedPosts->permalink(); ?>" class="" title="<?php $relatedPosts->title(); ?>">
-                    <?php $relatedPosts->title(25); ?>
-                </a>
-            </div>	
-        <?php endwhile; ?>	
+	        <h3 class="widget-title">相关文章</h3>
+	        <?php while ($relatedPosts->next()): ?> 
+	            <div class="post_related_list">
+	                <a href="<?php $relatedPosts->permalink(); ?>" class="" title="<?php echo once_esc_attr($relatedPosts->title ?? ''); ?>">
+	                    <?php $relatedPosts->title(25); ?>
+	                </a>
+	            </div>	
+	        <?php endwhile; ?>	
     </div>	 
     <?php endif; ?>	
     <?php $this->need('comments.php'); ?>

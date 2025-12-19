@@ -6,22 +6,22 @@
     <meta name="renderer" content="webkit">
     <meta http-equiv="Cache-Control" content="max-age=86400" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title><?php $this->archiveTitle([
+	    <title><?php $this->archiveTitle([
             'category' => _t('分类 %s 下的文章'),
             'search'   => _t('包含关键字 %s 的文章'),
             'tag'      => _t('标签 %s 下的文章'),
             'author'   => _t('%s 发布的文章')
         ], '', ' - '); ?><?php $this->options->title(); ?> | <?php $this->options->description(); ?></title>
-    <meta name="description" content="<?php $this->options->description(); ?>" />
-    <?php if ($this->options->faviconUrl): ?>
-    <link rel="icon" href="<?php $this->options->faviconUrl(); ?>" type="image/x-icon" />
-    <?php else: ?>
-    <link rel="icon" href="<?php $this->options->themeUrl('assets/img/nopic.svg'); ?>" type="image/svg+xml" />
-    <?php endif; ?>
-    <!-- 预加载logo图片 -->
-    <?php if ($this->options->logoUrl): ?>
-    <link rel="preload" href="<?php $this->options->logoUrl(); ?>" as="image">
-    <?php endif; ?>
+	    <meta name="description" content="<?php echo once_esc_attr($this->options->description ?? ''); ?>" />
+	    <?php if ($this->options->faviconUrl): ?>
+	    <link rel="icon" href="<?php echo once_esc_url($this->options->faviconUrl ?? ''); ?>" type="image/x-icon" />
+	    <?php else: ?>
+	    <link rel="icon" href="<?php $this->options->themeUrl('assets/img/nopic.svg'); ?>" type="image/svg+xml" />
+	    <?php endif; ?>
+	    <!-- 预加载logo图片 -->
+	    <?php if ($this->options->logoUrl): ?>
+	    <link rel="preload" href="<?php echo once_esc_url($this->options->logoUrl ?? ''); ?>" as="image">
+	    <?php endif; ?>
     <!-- 使用url函数转换相关路径 -->
     <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/bootstrap.min.css'); ?>">
     <link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/bootstrap-icons.css'); ?>">
@@ -75,14 +75,14 @@
 		<div class="top">
 			<button class="mobile_an" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobile_right_nav" aria-controls="mobile_right_nav"><i class="bi bi-list"></i></button>
 			<div class="top_l">
-          <h1 class="logo">
-            <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>">
-                <?php if ($this->options->logoUrl): ?>
-                <img src="<?php $this->options->logoUrl() ?>" onload="this.classList.add('loaded')">
-                <?php endif; ?>
-                <b><?php $this->options->title() ?></b>
-            </a>
-          </h1>
+	          <h1 class="logo">
+	            <a href="<?php $this->options->siteUrl(); ?>" title="<?php echo once_esc_attr($this->options->description ?? ''); ?>">
+	                <?php if ($this->options->logoUrl): ?>
+	                <img src="<?php echo once_esc_url($this->options->logoUrl ?? ''); ?>" onload="this.classList.add('loaded')">
+	                <?php endif; ?>
+	                <b><?php $this->options->title() ?></b>
+	            </a>
+	          </h1>
         		<nav class="header-menu">
                     <ul id="menu" class="header-menu-ul">
                     <li id="menu" class="menu-itemcurrent-menu-item current_page_item menu-item-home">
@@ -183,11 +183,11 @@
 <div class="offcanvas offcanvas-start" tabindex="-1" id="mobile_right_nav" aria-labelledby="mobile_right_navLabel">
 	<div class="mobile_head">
 		<div class="mobile_head_logo">
-		              <?php if ($this->options->logoUrl): ?>
-		                  <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><img src="<?php $this->options->logoUrl() ?>" onload="this.classList.add('loaded')"><b><?php $this->options->title() ?></b></a>
-		              <?php else: ?>
-		                  <a href="<?php $this->options->siteUrl(); ?>" title="<?php $this->options->description() ?>"><b><?php $this->options->title() ?></b></a>
-		       	<?php endif; ?>
+			              <?php if ($this->options->logoUrl): ?>
+			                  <a href="<?php $this->options->siteUrl(); ?>" title="<?php echo once_esc_attr($this->options->description ?? ''); ?>"><img src="<?php echo once_esc_url($this->options->logoUrl ?? ''); ?>" onload="this.classList.add('loaded')"><b><?php $this->options->title() ?></b></a>
+			              <?php else: ?>
+			                  <a href="<?php $this->options->siteUrl(); ?>" title="<?php echo once_esc_attr($this->options->description ?? ''); ?>"><b><?php $this->options->title() ?></b></a>
+			       	<?php endif; ?>
 		      </div>
 		<div class="theme-switch" onclick="window.switchDarkMode && window.switchDarkMode()"><i class="bi bi-lightbulb-fill"></i></div>
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -198,22 +198,22 @@
                 <a href="<?php $this->options->siteUrl(); ?>"><?php _e('首页'); ?></a>
             </li>
             <?php \Widget\Contents\Page\Rows::alloc()->to($pages); ?>
-            <?php while ($pages->next()): ?>
-                <li class="menu-item<?php if ($this->is('page', $pages->slug)): ?> current-menu-item<?php endif; ?>">
-                    <a href="<?php $pages->permalink(); ?>" title="<?php $pages->title(); ?>"><?php $pages->title(); ?></a>
-                </li>
-            <?php endwhile; ?>
+	            <?php while ($pages->next()): ?>
+	                <li class="menu-item<?php if ($this->is('page', $pages->slug)): ?> current-menu-item<?php endif; ?>">
+	                    <a href="<?php $pages->permalink(); ?>" title="<?php echo once_esc_attr($pages->title ?? ''); ?>"><?php echo once_esc_html($pages->title ?? ''); ?></a>
+	                </li>
+	            <?php endwhile; ?>
             
             <?php $this->widget('Widget_Metas_Category_List')->to($categories); ?>
             <?php if ($categories->have()): ?>
             <li class="menu-item menu-item-has-children">
                 <a href="javascript:void(0);"><?php _e('分类'); ?></a>
                 <ul class="sub-menu">
-                    <?php while ($categories->next()): ?>
-                    <li class="menu-item">
-                        <a href="<?php $categories->permalink(); ?>" title="<?php $categories->name(); ?>"><?php $categories->name(); ?> (<?php $categories->count(); ?>)</a>
-                    </li>
-                    <?php endwhile; ?>
+	                    <?php while ($categories->next()): ?>
+	                    <li class="menu-item">
+	                        <a href="<?php $categories->permalink(); ?>" title="<?php echo once_esc_attr($categories->name ?? ''); ?>"><?php echo once_esc_html($categories->name ?? ''); ?> (<?php echo (int)($categories->count ?? 0); ?>)</a>
+	                    </li>
+	                    <?php endwhile; ?>
                 </ul>
             </li>
             <?php endif; ?>

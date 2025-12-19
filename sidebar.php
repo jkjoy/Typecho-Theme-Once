@@ -63,14 +63,14 @@ $gravatarUrl = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=80&d=mm&r=g
 $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&r=g';
 ?>
 <div class="author_show_head">
-    <img alt='<?php echo htmlspecialchars($targetUser->screenName); ?>'
-         src='<?php echo htmlspecialchars($gravatarUrl); ?>'
-         srcset='<?php echo htmlspecialchars($gravatarUrl2x); ?> 2x'
+    <img alt='<?php echo once_esc_attr($targetUser->screenName); ?>'
+         src='<?php echo once_esc_url($gravatarUrl); ?>'
+         srcset='<?php echo once_esc_url($gravatarUrl2x); ?> 2x'
          class='avatar avatar-80 photo'
          height='80' width='80'
          loading='lazy'
          decoding='async'/>
-    <h3><?php echo htmlspecialchars($targetUser->screenName); ?></h3>
+    <h3><?php echo once_esc_html($targetUser->screenName); ?></h3>
     <p></p>
 </div>
 <div class="author_show_info">
@@ -87,6 +87,9 @@ $hotPostsCount = isset($this->options->hotarticle) ? intval($this->options->hota
 if ($hotPostsCount < 1) $hotPostsCount = 5;
 $hotTagsCount = isset($this->options->hottags) ? intval($this->options->hottags) : 20;
 if ($hotTagsCount < 1) $hotTagsCount = 20;
+
+// 侧边栏缓存（写入失败会自动降级为不缓存）
+$sidebarCacheTtl = 600; // 秒：10 分钟
 ?>
 <?php if (in_array('ShowRecentPosts', $sidebarBlock)): ?>
 	    <ul class="author_post">
@@ -99,13 +102,14 @@ if ($hotTagsCount < 1) $hotTagsCount = 20;
                 $result = get_post_thumbnail($recentPosts);
                 $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
                 $commentsNum = intval($recentPosts->commentsNum);
-                $title = htmlspecialchars($recentPosts->title);
+                $title = once_esc_html($recentPosts->title);
+                $titleAttr = once_esc_attr($recentPosts->title);
             ?>
                 <li>
-                    <img width="400" height="280" src="<?php echo htmlspecialchars($thumbnail); ?>"
-                         data-src="<?php echo htmlspecialchars($thumbnail); ?>"
+                    <img width="400" height="280" src="<?php echo once_esc_url($thumbnail); ?>"
+                         data-src="<?php echo once_esc_url($thumbnail); ?>"
                          class="thumbnail lazyload"
-                         alt="<?php echo $title; ?>"
+                         alt="<?php echo $titleAttr; ?>"
                          decoding="async" loading="lazy"
                          onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';"
                     />
@@ -135,67 +139,88 @@ if ($hotTagsCount < 1) $hotTagsCount = 20;
 
 <!-- 热门文章 -->
 <?php if (in_array('ShowHotPosts', $sidebarBlock)): ?>
-    <?php
-	    try {
-	        $hotPosts = $db->fetchAll($db->select()
-	            ->from('table.contents')
-	            ->where('type = ? AND status = ?', 'post', 'publish')
-	            ->order('commentsNum', Typecho_Db::SORT_DESC)
-	            ->limit($hotPostsCount)
-	        );
-	    } catch (Exception $e) {
-	        $hotPosts = array();
-	    }
+	    <?php
+	        $hotPostsView = null;
+	        $hotPostsCacheKey = 'once_sidebar_hot_posts_v1_' . $hotPostsCount;
+	        if (function_exists('once_cache_get')) {
+	            $hotPostsView = once_cache_get($hotPostsCacheKey, $sidebarCacheTtl);
+	        }
+	        if (!is_array($hotPostsView)) {
+	            try {
+	                $hotPosts = $db->fetchAll($db->select()
+	                    ->from('table.contents')
+	                    ->where('type = ? AND status = ?', 'post', 'publish')
+	                    ->order('commentsNum', Typecho_Db::SORT_DESC)
+	                    ->limit($hotPostsCount)
+	                );
+	            } catch (Exception $e) {
+	                $hotPosts = array();
+	            }
 
-    if (!empty($hotPosts)):
-    ?>
-        <aside id="hot_posts-2" class="widget widget_hot_posts">
-            <h3 class="widget-title">热门文章</h3>
-            <ul class="widget_hot_post">
-                <?php
-                foreach ($hotPosts as $post):
-                    try {
-                        // 使用 Widget_Abstract_Contents 处理文章数据
-                        $temp_post = Typecho_Widget::widget('Widget_Abstract_Contents')->filter($post);
-                        $post_images = get_post_thumbnail($post);
-                        // 获取缩略图URL，如果没有图片则使用默认图片
-                        $thumbnail = !empty($post_images['cropped_images']) ? $post_images['cropped_images'][0] : $post_images['thumbnail'];
-                        $title = isset($temp_post['title']) ? htmlspecialchars($temp_post['title']) : '';
-                        $permalink = isset($temp_post['permalink']) ? htmlspecialchars($temp_post['permalink']) : '#';
-                        $commentsNum = isset($temp_post['commentsNum']) ? intval($temp_post['commentsNum']) : 0;
-                ?>
-                        <li class="widget_hot_li">
-                            <img width="400"
-                                 height="280"
-                                 src="<?php echo htmlspecialchars($thumbnail); ?>"
-                                 data-src="<?php echo htmlspecialchars($thumbnail); ?>"
-                                 class="thumbnail lazyload"
-                                 alt="<?php echo $title; ?>"
-                                 decoding="async"
-                                 loading="lazy"
-                                 onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';" />
-                            <div class="hot_post_info">
-                                <h4>
-                                    <a class="stretched-link"
-                                       href="<?php echo $permalink; ?>">
-                                        <?php echo $title; ?>
-                                    </a>
-                                </h4>
-                                <p><?php echo $commentsNum; ?> 条留言</p>
-                            </div>
-                        </li>
-                <?php
-                    } catch (Exception $e) {
-                        // 忽略单篇异常
-                        continue;
-                    }
-                endforeach;
-                ?>
-            </ul>
-        </aside>
-    <?php else: ?>
-        <p>无热门文章</p>
-    <?php endif; ?>
+	            $hotPostsView = array();
+	            if (!empty($hotPosts)) {
+	                $contentsWidget = Typecho_Widget::widget('Widget_Abstract_Contents');
+	                foreach ($hotPosts as $post) {
+	                    try {
+	                        $temp_post = $contentsWidget->filter($post);
+	                        $post_images = get_post_thumbnail($post);
+	                        $thumbnail = !empty($post_images['cropped_images']) ? $post_images['cropped_images'][0] : $post_images['thumbnail'];
+	                        $hotPostsView[] = array(
+	                            'title' => isset($temp_post['title']) ? (string)$temp_post['title'] : '',
+	                            'permalink' => isset($temp_post['permalink']) ? (string)$temp_post['permalink'] : '#',
+	                            'commentsNum' => isset($temp_post['commentsNum']) ? (int)$temp_post['commentsNum'] : 0,
+	                            'thumbnail' => (string)$thumbnail
+	                        );
+	                    } catch (Exception $e) {
+	                        continue;
+	                    }
+	                }
+	            }
+
+	            if (function_exists('once_cache_set')) {
+	                @once_cache_set($hotPostsCacheKey, $hotPostsView);
+	            }
+	        }
+
+	    if (!empty($hotPostsView)):
+	    ?>
+	        <aside id="hot_posts-2" class="widget widget_hot_posts">
+	            <h3 class="widget-title">热门文章</h3>
+	            <ul class="widget_hot_post">
+	                <?php
+	                foreach ($hotPostsView as $item):
+	                    $title = once_esc_html((string)($item['title'] ?? ''));
+	                    $titleAttr = once_esc_attr((string)($item['title'] ?? ''));
+	                    $permalink = once_esc_url((string)($item['permalink'] ?? '#'));
+	                    $commentsNum = (int)($item['commentsNum'] ?? 0);
+	                    $thumbnail = once_esc_url((string)($item['thumbnail'] ?? ''));
+	                ?>
+	                        <li class="widget_hot_li">
+	                            <img width="400"
+	                                 height="280"
+	                                 src="<?php echo $thumbnail; ?>"
+	                                 data-src="<?php echo $thumbnail; ?>"
+	                                 class="thumbnail lazyload"
+	                                 alt="<?php echo $titleAttr; ?>"
+	                                 decoding="async"
+	                                 loading="lazy"
+	                                 onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';" />
+	                            <div class="hot_post_info">
+	                                <h4>
+	                                    <a class="stretched-link"
+	                                       href="<?php echo $permalink; ?>">
+	                                        <?php echo $title; ?>
+	                                    </a>
+	                                </h4>
+	                                <p><?php echo $commentsNum; ?> 条留言</p>
+	                            </div>
+		                        </li>
+		                <?php endforeach; ?>
+		            </ul>
+		        </aside>
+		    <?php else: ?>
+		        <p>无热门文章</p>
+	    <?php endif; ?>
 <?php endif; ?>
 
 <!-- 最近回复 -->
@@ -223,25 +248,54 @@ if ($hotTagsCount < 1) $hotTagsCount = 20;
 <!-- 热门标签 -->
 <?php if (in_array('ShowTags', $sidebarBlock)): ?>
 	    <?php
-	    // 获取热门标签
-	    $tags = \Widget\Metas\Tag\Cloud::alloc('sort=count&desc=1&limit=' . $hotTagsCount);
-	    if ($tags->have()):
+	    $tagsView = null;
+	    $hotTagsCacheKey = 'once_sidebar_hot_tags_v1_' . $hotTagsCount;
+	    if (function_exists('once_cache_get')) {
+	        $tagsView = once_cache_get($hotTagsCacheKey, $sidebarCacheTtl);
+	    }
+	    if (!is_array($tagsView)) {
+	        $tagsView = array();
+	        $tags = \Widget\Metas\Tag\Cloud::alloc('sort=count&desc=1&limit=' . $hotTagsCount);
+	        if ($tags->have()) {
+	            while ($tags->next()) {
+	                ob_start();
+	                $tags->permalink();
+	                $permalink = trim((string)ob_get_clean());
+	                $tagName = isset($tags->name) ? (string)$tags->name : '';
+	                if ($tagName === '') {
+	                    ob_start();
+	                    $tags->name();
+	                    $tagName = trim(strip_tags((string)ob_get_clean()));
+	                }
+	                $tagsView[] = array(
+	                    'name' => $tagName,
+	                    'count' => (int)$tags->count,
+	                    'permalink' => $permalink
+	                );
+	            }
+	        }
+	        if (function_exists('once_cache_set')) {
+	            @once_cache_set($hotTagsCacheKey, $tagsView);
+	        }
+	    }
+
+	    if (!empty($tagsView)):
 	    ?>
 	        <aside id="hot_tags-2" class="widget widget_hot_tags">
-            <h3 class="widget-title">热门标签</h3>
-            <div class="tagcloud">
-                <?php while ($tags->next()): ?>
-                    <a href="<?php $tags->permalink(); ?>"
-                       title="<?php $tags->name(); ?> (<?php $tags->count(); ?> 篇文章)"
-                       class="tag-item">
-                        <?php $tags->name(); ?>
-                    </a>
-                <?php endwhile; ?>
-            </div>
-        </aside>
-    <?php else: ?>
-        <aside id="hot_tags-2" class="widget widget_hot_tags">
-            <h3 class="widget-title">热门标签</h3>
+	            <h3 class="widget-title">热门标签</h3>
+	            <div class="tagcloud">
+	                <?php foreach ($tagsView as $tag): ?>
+	                    <a href="<?php echo once_esc_url((string)($tag['permalink'] ?? '#')); ?>"
+	                       title="<?php echo once_esc_attr((string)($tag['name'] ?? '')); ?> (<?php echo (int)($tag['count'] ?? 0); ?> 篇文章)"
+	                       class="tag-item">
+	                        <?php echo once_esc_html((string)($tag['name'] ?? '')); ?>
+	                    </a>
+	                <?php endforeach; ?>
+	            </div>
+	        </aside>
+	    <?php else: ?>
+	        <aside id="hot_tags-2" class="widget widget_hot_tags">
+	            <h3 class="widget-title">热门标签</h3>
             <div class="tagcloud"></div>
         </aside>
     <?php endif; ?>

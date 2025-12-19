@@ -19,22 +19,22 @@ if (!empty($slides)):
                     </div>
                     <!-- 幻灯片内容 -->
                     <div class="carousel-inner">
-                    <?php foreach ($slides as $index => $post): ?>
-                        <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
-                            <a class="banlist" href="<?php echo $post['permalink']; ?>">
-                            <?php $result = get_post_thumbnail($post);$thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail']; ?>
-                            <img src="<?php echo htmlspecialchars($thumbnail); ?>" 
-                             alt="<?php echo htmlspecialchars($post['title']); ?>" 
-                             decoding="async" 
-                             class="post-images lazyload"
-                             loading="lazy"
-                             data-src="<?php echo htmlspecialchars($thumbnail); ?>"
-                             onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';" />
-                        <h2><?php echo $post['title']; ?></h2>
-                        <i>置顶精彩</i>
-                    </a>
-                </div>
-                <?php endforeach; ?>
+	                    <?php foreach ($slides as $index => $post): ?>
+	                        <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
+	                            <a class="banlist" href="<?php echo once_esc_url($post['permalink'] ?? ''); ?>">
+	                            <?php $result = get_post_thumbnail($post);$thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail']; ?>
+	                            <img src="<?php echo once_esc_url($thumbnail); ?>" 
+	                             alt="<?php echo once_esc_attr($post['title'] ?? ''); ?>" 
+	                             decoding="async" 
+	                             class="post-images lazyload"
+	                             loading="lazy"
+	                             data-src="<?php echo once_esc_url($thumbnail); ?>"
+	                             onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';" />
+	                        <h2><?php echo once_esc_html($post['title'] ?? ''); ?></h2>
+	                        <i>置顶精彩</i>
+	                    </a>
+	                </div>
+	                <?php endforeach; ?>
             </div>          
             <!-- 控制按钮 -->
             <?php if (count($slides) > 1): ?>
@@ -80,15 +80,20 @@ if ($midCenter) {
             $result = get_post_thumbnail($post);
             $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
             
-            // 构建文章链接
-            $permalink = Typecho_Router::url('post', array('cid' => $post['cid']), $this->options->index);
-            
-            // 输出HTML
-            echo '<a class="zt_list" href="' . $permalink . '" title="' . htmlspecialchars($post['title']) . '">';
-            echo '<img src="' . $thumbnail . '" decoding="async" loading="lazy" class="post-images-c lazyload" data-src="' . $thumbnail . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
-            echo '<h3>' . htmlspecialchars($post['title']) . '</h3>';
-            echo '<b>' . htmlspecialchars($post['category_name']) . '</b>';
-            echo '</a>';
+	            // 构建文章链接
+	            $permalink = Typecho_Router::url('post', array('cid' => $post['cid']), $this->options->index);
+	            $safePermalink = once_esc_url($permalink);
+	            $safeTitleAttr = once_esc_attr($post['title'] ?? '');
+	            $safeTitleHtml = once_esc_html($post['title'] ?? '');
+	            $safeCategoryHtml = once_esc_html($post['category_name'] ?? '');
+	            $safeThumb = once_esc_url($thumbnail);
+	            
+	            // 输出HTML
+	            echo '<a class="zt_list" href="' . $safePermalink . '" title="' . $safeTitleAttr . '">';
+	            echo '<img src="' . $safeThumb . '" decoding="async" loading="lazy" class="post-images-c lazyload" data-src="' . $safeThumb . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
+	            echo '<h3>' . $safeTitleHtml . '</h3>';
+	            echo '<b>' . $safeCategoryHtml . '</b>';
+	            echo '</a>';
         }
     } else {
         echo '<div class="zt_list">没有找到分类文章</div>';
@@ -120,20 +125,25 @@ if ($midRight) {
         $result = get_post_thumbnail($rightPost);
         $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];
         
-        // 构建文章链接
-        $permalink = Typecho_Router::url('post', array('cid' => $rightPost['cid']), $this->options->index);
-        
-        // 输出HTML
-        echo '<a class="gglb" href="' . $permalink . '" title="' . htmlspecialchars($rightPost['title']) . '">';
-        echo '<img src="' . $thumbnail . '" decoding="async" loading="lazy" class="post-images-r lazyload" data-src="' . $thumbnail . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
-        echo '<div class="gg_txt">
-                <h3>' . htmlspecialchars($rightPost['title']) . '</h3>
-                <p><i class="bi bi-clock"></i>' . date('Y-m-d', $rightPost['created']) . '</p>
-              </div>
-              <b>' . htmlspecialchars($rightPost['category_name']) . '</b></a>';
-    } else {
-        echo '<div class="gglb">没有找到分类文章</div>';
-    }
+	        // 构建文章链接
+	        $permalink = Typecho_Router::url('post', array('cid' => $rightPost['cid']), $this->options->index);
+	        $safePermalink = once_esc_url($permalink);
+	        $safeTitleAttr = once_esc_attr($rightPost['title'] ?? '');
+	        $safeTitleHtml = once_esc_html($rightPost['title'] ?? '');
+	        $safeCategoryHtml = once_esc_html($rightPost['category_name'] ?? '');
+	        $safeThumb = once_esc_url($thumbnail);
+	        
+	        // 输出HTML
+	        echo '<a class="gglb" href="' . $safePermalink . '" title="' . $safeTitleAttr . '">';
+	        echo '<img src="' . $safeThumb . '" decoding="async" loading="lazy" class="post-images-r lazyload" data-src="' . $safeThumb . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
+	        echo '<div class="gg_txt">
+	                <h3>' . $safeTitleHtml . '</h3>
+	                <p><i class="bi bi-clock"></i>' . date('Y-m-d', $rightPost['created']) . '</p>
+	              </div>
+	              <b>' . $safeCategoryHtml . '</b></a>';
+	    } else {
+	        echo '<div class="gglb">没有找到分类文章</div>';
+	    }
     echo '</div>';
 }
 ?>
