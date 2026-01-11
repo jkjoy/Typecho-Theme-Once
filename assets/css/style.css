@@ -226,14 +226,14 @@ img{border:0;max-width:100%;height:auto;}
 .post_def .post_def_right .post_def_title h2{font-size:18px;margin-bottom:15px;}
 .post_def .post_def_right .post_def_title h2 a{}
 .post_def .post_def_right .post_def_title p{color:#545454;line-height:1.8;font-weight:300;display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;}
-.post_info{color:#555;font-size:12px;font-weight:300;display:flex;justify-content:space-between;align-items:center;}
+.post_info{color:#374151;font-size:12px;font-weight:300;display:flex;justify-content:space-between;align-items:center;}
 .post_info .post_info_l{}
 .post_info .post_info_l span{margin-right:20px;}
 .post_info .post_info_l span i{margin-right:6px;}
-.post_info .post_info_l span a{color:#555;}
+.post_info .post_info_l span a{color:#374151;}
 .post_info .post_info_r{}
-.post_info .post_info_r em{font-style:inherit;margin-left:12px;color:#555;}
-.post_info .post_info_r em a{margin-left:3px;color:#555;}
+.post_info .post_info_r em{font-style:inherit;margin-left:12px;color:#374151;}
+.post_info .post_info_r em a{margin-left:3px;color:#374151;}
 .post_gallery{background:#fff;padding:20px;margin-bottom:20px;}
 .post_gallery .post_gallery_head{position:relative;}
 .post_gallery .post_gallery_head h2{font-size:18px;margin-bottom:20px;}

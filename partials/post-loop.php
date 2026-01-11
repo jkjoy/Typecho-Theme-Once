@@ -44,19 +44,19 @@ $thumbnailAttr = once_esc_url($thumbnail);
 		                    <h2><a class="" href="<?php echo $postPermalinkAttr; ?>" title="<?php echo $postTitleAttr; ?>"><?php echo once_esc_html($postTitleNormalized); ?></a></h2>
 		                    <p><?php if ($this->fields->summary) { echo once_esc_html($this->fields->summary); } else { $this->excerpt(180); } ?></p>
 		                </div>
-		                <div class="post_info">
-	                    <div class="post_info_l">
-	                        <span><i class="bi bi-text-left"></i>
-	                        <?php foreach($this->categories as $category): ?>
-	                        <a href="<?php echo once_esc_url($category['permalink'] ?? ''); ?>" rel="category tag"><?php echo once_esc_html($category['name'] ?? ''); ?></a>
-	                        <?php endforeach; ?>
-	                        </span>
-	                        <span class="mobile_none"><i class="bi bi-clock"></i><?php $this->date(); ?></span>
-	                        <span class=""><i class="bi bi-eye"></i><?php get_post_view($this) ?>人浏览</span>
-	                    </div>
-	                    <div class="post_info_r">
-	                        <?php if ($this->tags): ?>
-	                        <?php foreach ($this->tags as $tag): ?>
+	                <div class="post_info">
+		                    <div class="post_info_l">
+		                        <span class="post_cats"><i class="bi bi-text-left"></i>
+		                        <?php foreach($this->categories as $category): ?>
+		                        <a href="<?php echo once_esc_url($category['permalink'] ?? ''); ?>" rel="category tag"><?php echo once_esc_html($category['name'] ?? ''); ?></a>
+		                        <?php endforeach; ?>
+		                        </span>
+		                        <span class="mobile_none"><i class="bi bi-clock"></i><?php $this->date(); ?></span>
+		                        <span class="post_views"><i class="bi bi-eye"></i><?php get_post_view($this) ?>人浏览</span>
+		                    </div>
+		                    <div class="post_info_r">
+		                        <?php if ($this->tags): ?>
+		                        <?php foreach ($this->tags as $tag): ?>
 	                        <em><i class="bi bi-hash"></i><a href="<?php echo once_esc_url($tag['permalink'] ?? ''); ?>"><?php echo once_esc_html($tag['name'] ?? ''); ?></a></em>
 	                        <?php endforeach; ?>
 	                        <?php endif; ?>
