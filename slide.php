@@ -9,14 +9,16 @@ if (!empty($slides)):
 	        <div class="row g-3">
 	            <div class="col-lg-7">   
 	                <div id="banner" class="carousel slide carousel-fade">
-                    <!-- 指示器 -->
-                    <div class="carousel-indicators">
-                    <?php foreach ($slides as $index => $post): ?>
-                    <button type="button" 
-                        class="<?php echo $index === 0 ? 'active' : ''; ?>">
-                    </button>
-                    <?php endforeach; ?>
-                    </div>
+	                    <!-- 指示器 -->
+	                    <div class="carousel-indicators">
+	                    <?php foreach ($slides as $index => $post): ?>
+	                    <button type="button"
+	                        class="<?php echo $index === 0 ? 'active' : ''; ?>"
+	                        aria-label="切换到第<?php echo (int)$index + 1; ?>张"
+	                        <?php if ($index === 0): ?>aria-current="true"<?php endif; ?>>
+	                    </button>
+	                    <?php endforeach; ?>
+	                    </div>
 		            <!-- 幻灯片内容 -->
 		            <div class="carousel-inner">
 			            <?php foreach ($slides as $index => $post):
@@ -40,17 +42,17 @@ if (!empty($slides)):
 			                </a>
 			                </div>
 			                <?php endforeach; ?>
-				            </div>
-				            <!-- 控制按钮 -->
-				            <?php if (count($slides) > 1): ?>
-				            <button class="carousel-control-prev" type="button">
-				                <i class="bi bi-chevron-left"></i>
-				            </button>
-				            <button class="carousel-control-next" type="button">
-				                <i class="bi bi-chevron-right"></i>
-				            </button>
-				            <?php endif; ?>
-				        </div>
+					            </div>
+					            <!-- 控制按钮 -->
+					            <?php if (count($slides) > 1): ?>
+					            <button class="carousel-control-prev" type="button" aria-label="上一张">
+					                <i class="bi bi-chevron-left"></i>
+					            </button>
+					            <button class="carousel-control-next" type="button" aria-label="下一张">
+					                <i class="bi bi-chevron-right"></i>
+					            </button>
+					            <?php endif; ?>
+					        </div>
 				    </div>
 				    <?php
 				    // 获取设置中的分类ID

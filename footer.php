@@ -2,6 +2,7 @@
 </div>
 </div>
 </section>
+</main>
 <?php if ($this->options->showlinks): ?>
 <section class="links mobile_none">
     <div class="container">

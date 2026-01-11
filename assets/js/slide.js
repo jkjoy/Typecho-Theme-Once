@@ -39,6 +39,8 @@ class Carousel {
         if (this.indicators) {
             this.indicators[this.current].classList.remove('active');
             this.indicators[index].classList.add('active');
+            this.indicators[this.current].removeAttribute('aria-current');
+            this.indicators[index].setAttribute('aria-current', 'true');
         }      
         this.current = index;
     }  

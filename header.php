@@ -1,6 +1,6 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
 <!DOCTYPE HTML>
-<html>
+<html lang="ZH-CN">
 <head>
 <meta charset="<?php $this->options->charset(); ?>">
 <meta name="renderer" content="webkit">
@@ -212,13 +212,14 @@
             </li>
             <?php endif; ?>
         </ul>
-    </div>
-</div>
-
-<?php if ($this->is('index')):
-$this->need('slide.php');
-endif; ?> 
-
+	    </div>
+	</div>
+	
+	<main id="main" class="main" role="main">
+	<?php if ($this->is('index')):
+	$this->need('slide.php');
+	endif; ?> 
+	
 <section class="index_area">
     <div class="container">
         <div class="row g-3">

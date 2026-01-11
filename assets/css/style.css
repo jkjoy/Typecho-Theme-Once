@@ -170,7 +170,9 @@ img{border:0;max-width:100%;height:auto;}
 .index_banner{margin-bottom:25px;}
 #banner{border-radius:4px;overflow:hidden;}
 #banner .carousel-indicators{right:20px;left:inherit;bottom:14px;margin-right:inherit;margin-bottom:inherit;margin-left:inherit;display:flex;justify-content:flex-end;}
-#banner .carousel-indicators button{width:10px;height:10px;border-radius:50%;}
+#banner .carousel-indicators button{width:44px;height:44px;border-radius:50%;padding:0;margin:0 4px;border:none;background-color:transparent;position:relative;touch-action:manipulation;}
+#banner .carousel-indicators button:before{content:'';width:10px;height:10px;border-radius:50%;background-color:hsl(0,0%,100%);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:background-color 0.3s ease;}
+#banner .carousel-indicators button.active:before{background-color:rgba(0, 0, 0, 0.8);}
 #banner .carousel-control-prev,
 #banner .carousel-control-next{opacity:0;}
 #banner .carousel-control-prev i,
@@ -186,7 +188,7 @@ img{border:0;max-width:100%;height:auto;}
 #banner .banlist i{position:absolute;top:0px;left:0px;background:#4270f5;color:#fff;font-size:12px;font-style:inherit;padding:3px 7px;}
 #banner:hover .banlist img{transform:scale(1.1);}
 @media (max-width:768px){
-    #banner .banlist h2{bottom:22px;text-align:center;}
+    #banner .banlist h2{bottom:60px;text-align:center;}
     #banner .carousel-indicators{display:flex;justify-content:center;right:0;left:0;bottom:8px;}
 }
 
@@ -328,6 +330,9 @@ img{border:0;max-width:100%;height:auto;}
 .widget_hot_tags .tagcloud a{font-size:13px!important;padding:5px 13px;display:inline-block;margin-right:6px;margin-bottom:6px;border-radius:3px;background-color:#f5f5f5;position:relative;}
 .widget_hot_tags .tagcloud a:hover{background:#4270f5;color:#fff;}
 .widget_hot_tags .tagcloud a.hot:before{content:"";position:absolute;width:12px;height:12px;background:#4270f5;border-radius:50%;top:-2px;right:0px;border:3px solid #fff;}
+
+/*widget misc*/
+.widget_misc_ul li a{display:flex;align-items:center;min-height:48px;}
 
 /*widget search*/
 .widget_search .searchform{position:relative;}
@@ -717,15 +722,28 @@ img{border:0;max-width:100%;height:auto;}
 }
 /* 添加以下样式使指示器变为圆形 */
 .carousel-indicators button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    padding: 0;
+    margin: 0 4px;
+    border: none;
+    background-color: transparent;
+    position: relative;
+    touch-action: manipulation;
+}
+.carousel-indicators button:before {
+    content: '';
     width: 10px;
     height: 10px;
-    border-radius: 50%;  /* 这行是关键，使元素变为圆形 */
-    padding: 0;
-    margin: 0 5px;
-    border: none;
+    border-radius: 50%;
     background-color: hsl(0, 0.00%, 100.00%);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     transition: background-color 0.3s ease;
 }
-.carousel-indicators button.active {
+.carousel-indicators button.active:before {
     background-color: rgba(0, 0, 0, 0.8);
 }
