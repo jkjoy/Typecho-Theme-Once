@@ -1,9 +1,4 @@
-<?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-<div class="col-lg-3">
-<div class="sidebar_sticky">
-    <div class="author_show_box">
-<!-- 作者信息 -->
-<?php
+<?php if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 // 获取数据库实例
 $db = Typecho_Db::get();
 // 获取当前用户
@@ -62,6 +57,10 @@ $gravatarPrefix = empty($options->cnavatar) ? 'https://cravatar.cn/avatar/' : $o
 $gravatarUrl = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=80&d=mm&r=g';
 $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&r=g';
 ?>
+<div class="col-lg-3">
+<div class="sidebar_sticky">
+<div class="author_show_box">
+<!-- 作者信息 -->
 <div class="author_show_head">
     <img alt='<?php echo once_esc_attr($targetUser->screenName); ?>'
          src='<?php echo once_esc_url($gravatarUrl); ?>'
@@ -71,7 +70,6 @@ $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&
          loading='lazy'
          decoding='async'/>
     <h3><?php echo once_esc_html($targetUser->screenName); ?></h3>
-    <p></p>
 </div>
 <div class="author_show_info">
     <span><i class="bi bi-book"></i><b>文章</b><?php echo $postCount; ?></span>
@@ -90,9 +88,8 @@ if ($hotTagsCount < 1) $hotTagsCount = 20;
 
 // 侧边栏缓存（写入失败会自动降级为不缓存）
 $sidebarCacheTtl = 600; // 秒：10 分钟
-?>
-<?php if (in_array('ShowRecentPosts', $sidebarBlock)): ?>
-	    <ul class="author_post">
+if (in_array('ShowRecentPosts', $sidebarBlock)): ?>
+<ul class="author_post">
 <?php
     try {
         // 获取指定用户的最近文章
@@ -123,18 +120,10 @@ $sidebarCacheTtl = 600; // 秒：10 分钟
                         <p><?php echo $commentsNum; ?> 条留言</p>
                     </div>
                 </li>
-            <?php
-            endwhile;
-        else:
-            ?>
+            <?php endwhile; else:?>
             <li>暂无最近文章</li>
-            <?php
-        endif;
-    } catch (Exception $e) {
-        echo '<li>获取文章失败</li>';
-    }
-?>
-	    </ul>
+            <?php endif;} catch (Exception $e) {echo '<li>获取文章失败</li>';} ?>
+	</ul>
 </div>
 <?php endif; ?>
 
@@ -222,8 +211,7 @@ $sidebarCacheTtl = 600; // 秒：10 分钟
 		        </aside>
 		    <?php else: ?>
 		        <p>无热门文章</p>
-	    <?php endif; ?>
-<?php endif; ?>
+	    <?php endif;endif; ?>
 
 <!-- 最近回复 -->
 <?php if (in_array('ShowRecentComments', $sidebarBlock)): ?>
@@ -248,8 +236,7 @@ $sidebarCacheTtl = 600; // 秒：10 分钟
 <?php endif; ?>
 
 <!-- 热门标签 -->
-<?php if (in_array('ShowTags', $sidebarBlock)): ?>
-	    <?php
+<?php if (in_array('ShowTags', $sidebarBlock)): 
 	    $tagsView = null;
 	    $hotTagsCacheKey = 'once_sidebar_hot_tags_v1_' . $hotTagsCount;
 	    if (function_exists('once_cache_get')) {
@@ -280,9 +267,7 @@ $sidebarCacheTtl = 600; // 秒：10 分钟
 	            @once_cache_set($hotTagsCacheKey, $tagsView);
 	        }
 	    }
-
-	    if (!empty($tagsView)):
-	    ?>
+    if (!empty($tagsView)):?>
 	        <aside id="hot_tags-2" class="widget widget_hot_tags">
 	            <h3 class="widget-title">热门标签</h3>
 	            <div class="tagcloud">
@@ -300,35 +285,34 @@ $sidebarCacheTtl = 600; // 秒：10 分钟
 	            <h3 class="widget-title">热门标签</h3>
             <div class="tagcloud"></div>
         </aside>
-    <?php endif; ?>
-<?php endif; ?>
+    <?php endif;endif; ?>
 
  <!-- 其它 -->
 <?php if (in_array('ShowOther', $sidebarBlock)): ?>
-        <aside id="misc-2" class="widget widget_misc">
-            <h3 class="widget-title"><?php _e('其它'); ?></h3>
-            <ul class="widget_misc_ul">
-                <?php if ($this->user->hasLogin()): ?>
-                    <li>
-                        <a href="<?php $this->options->adminUrl(); ?>"><?php _e('<i class="bi bi-box-arrow-in-right me-1"></i> 进入后台'); ?>
-                            (<?php $this->user->screenName(); ?>)
-                        </a>
-                    </li>
-                    <li>
-                        <a href="<?php $this->options->logoutUrl(); ?>"><?php _e('<i class="bi bi-box-arrow-right me-1"></i> 退出'); ?></a>
-                    </li>
-                <?php else: ?>
-                    <li>
-                        <a href="<?php $this->options->adminUrl('login.php'); ?>"><?php _e('<i class="bi bi-box-arrow-in-right me-1"></i> 登录'); ?></a>
-                    </li>
-                <?php endif; ?>
-                <li>
-                    <a href="<?php $this->options->feedUrl(); ?>"><?php _e('<i class="bi bi-rss me-1"></i> 文章 '); ?></a>
-                </li>
-                <li>
-                    <a href="<?php $this->options->commentsFeedUrl(); ?>"><?php _e('<i class="bi bi-rss-fill me-1"></i> 评论 '); ?></a>
-                </li>
-            </ul>
-        </aside>
+<aside id="misc-2" class="widget widget_misc">
+    <h3 class="widget-title"><?php _e('其它'); ?></h3>
+    <ul class="widget_misc_ul">
+    <?php if ($this->user->hasLogin()): ?>
+        <li>
+            <a href="<?php $this->options->adminUrl(); ?>"><?php _e('<i class="bi bi-box-arrow-in-right me-1"></i> 进入后台'); ?>
+                (<?php $this->user->screenName(); ?>)
+            </a>
+        </li>
+        <li>
+            <a href="<?php $this->options->logoutUrl(); ?>"><?php _e('<i class="bi bi-box-arrow-right me-1"></i> 退出'); ?></a>
+        </li>
+        <?php else: ?>
+        <li>
+            <a href="<?php $this->options->adminUrl('login.php'); ?>"><?php _e('<i class="bi bi-box-arrow-in-right me-1"></i> 登录'); ?></a>
+        </li>
+        <?php endif; ?>
+        <li>
+            <a href="<?php $this->options->feedUrl(); ?>"><?php _e('<i class="bi bi-rss me-1"></i> 文章 '); ?></a>
+        </li>
+        <li>
+            <a href="<?php $this->options->commentsFeedUrl(); ?>"><?php _e('<i class="bi bi-rss-fill me-1"></i> 评论 '); ?></a>
+        </li>
+    </ul>
+</aside>
 <?php endif; ?>
 </div>

@@ -4,8 +4,8 @@
  *
  * @package custom
  */
-if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-<?php $this->need('header.php'); ?>
+if (!defined('__TYPECHO_ROOT_DIR__')) exit;
+$this->need('header.php'); ?>
 <div class="col-lg-9">
     <div class="post_container_title">
 	    <h1><?php $this->title() ?></h1>
@@ -45,6 +45,4 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
     </div>
     </div>
 </div>
-<?php $this->need('sidebar.php'); ?>
-<?php $this->need('footer.php'); ?>
-<style>.widget_recent_entries .archive-title a{font-size: 1rem !important;}</style>
+<?php $this->need('sidebar.php');$this->need('footer.php'); ?>

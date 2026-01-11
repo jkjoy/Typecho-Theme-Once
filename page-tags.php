@@ -4,8 +4,7 @@
  *
  * @package custom
  */
-?>
-<?php $this->need('header.php'); ?>
+$this->need('header.php'); ?>
 <div class="col-lg-9">
     <div class="post_container_title">
         <h1><?php $this->title() ?></h1>
@@ -31,5 +30,4 @@
         </article>
     </div>
 </div>
-<?php $this->need('sidebar.php'); ?>
-<?php $this->need('footer.php'); ?>
+<?php $this->need('sidebar.php');$this->need('footer.php'); ?>

@@ -1,5 +1,5 @@
-<?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-<?php $this->need('header.php'); ?>
+<?php if (!defined('__TYPECHO_ROOT_DIR__')) exit;
+$this->need('header.php'); ?>
 <div class="col-lg-9">
     <div class="post_container_title">
 		<h1><?php $this->title() ?></h1>
@@ -33,14 +33,11 @@
 		</div>
 		<div class="post_author_r">
 	        <div class="post_author_tag">
-	            <?php if ($this->tags): ?>
-	            <?php foreach ($this->tags as $tag): ?>
+	            <?php if ($this->tags):foreach ($this->tags as $tag): ?>
 	            <em> 
 	                <a href="<?php echo once_esc_url($tag['permalink'] ?? ''); ?>"><i class="bi bi-hash"></i><?php echo once_esc_html($tag['name'] ?? ''); ?></a> 
 	            </em>
-	            <?php endforeach; ?>
-	            <?php else: ?>
-	            <?php endif; ?>
+	            <?php endforeach;else:endif; ?>
             <em><i class="bi bi-list"></i> <?php $this->category(','); ?></em>
         </div>
 			<div class="post_author_icon">
@@ -89,24 +86,20 @@
 		                        <p><?php echo once_esc_html($prevRawTitle); ?></p>
 		                    </div>
 		                </a>
-		            <?php else: ?>
-          
-            <?php endif; ?>
+		        <?php else:endif; ?>
             </div>
-		            <div class="prev_next_box nav_next"<?php if (!$prev) echo ' style="width:100%"'; ?>>
-		            <?php if ($next):
-		                $nextUrl = Typecho_Router::url('post', $next, $this->options->index);
-		                $nextRawTitle = once_decode_html_entities_deep($next['title'] ?? '', 3);
-		            ?>
-		                <a href="<?php echo once_esc_url($nextUrl); ?>" title="<?php echo once_esc_attr($nextRawTitle); ?>" rel="next" style="background-image: url('<?php echo once_esc_url($nextThumbnailUrl); ?>');">
-		                    <div class="prev_next_info">
-		                        <small>下一篇</small>
-		                        <p><?php echo once_esc_html($nextRawTitle); ?></p>
-		                    </div>
-		                </a>
-		            <?php else: ?>
-    
-            <?php endif; ?>
+		    <div class="prev_next_box nav_next"<?php if (!$prev) echo ' style="width:100%"'; ?>>
+		    <?php if ($next):
+		        $nextUrl = Typecho_Router::url('post', $next, $this->options->index);
+		        $nextRawTitle = once_decode_html_entities_deep($next['title'] ?? '', 3);
+		    ?>
+		    <a href="<?php echo once_esc_url($nextUrl); ?>" title="<?php echo once_esc_attr($nextRawTitle); ?>" rel="next" style="background-image: url('<?php echo once_esc_url($nextThumbnailUrl); ?>');">
+		        <div class="prev_next_info">
+		            <small>下一篇</small>
+		            <p><?php echo once_esc_html($nextRawTitle); ?></p>
+		        </div>
+		    </a>
+		    <?php else:endif; ?>
             </div>
         </div>
     <?php $this->related(6)->to($relatedPosts); if ($relatedPosts->have()):?>
@@ -124,8 +117,7 @@
 		            </div>	
 		        <?php endwhile; ?>	
 	    </div>	 
-    <?php endif; ?>	
-    <?php $this->need('comments.php'); ?>
+    <?php endif;$this->need('comments.php'); ?>
 </div><!-- #main-->
 <?php $this->need('sidebar.php'); ?>
 <?php $this->need('footer.php'); ?>

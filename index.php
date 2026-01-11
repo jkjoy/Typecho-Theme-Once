@@ -1,9 +1,8 @@
 <?php
 /**
- * Once for Typecho
- * 双栏主题
- * 原作者 huitheme
- * 老孙移植
+ * Once for Typecho 
+ * 双栏主题 老孙移植
+ * 原主题为Wordpress主题 原作者 huitheme 
  * @package  Once 
  * @author 老孙
  * @version 1.4.0
@@ -46,18 +45,15 @@ $this->need('header.php');
 ?>
 <div class="col-lg-9">
     <div class="post_box">
-    <?php while ($this->next()): ?>
-        <?php $once_loop_image_lazy = true; $this->need('partials/post-loop.php'); ?>
-        <?php endwhile; ?>
+    <?php while ($this->next()): $once_loop_image_lazy = true; $this->need('partials/post-loop.php'); endwhile; ?>
     </div>
-    <?php
+<?php
 $nextPage = $this->_currentPage + 1;
 $totalPages = ceil($this->getTotal() / $this->parameter->pageSize);
 if ($this->_currentPage < $totalPages): ?>
-    <div class="post-read-more">
-    <?php $this->pageLink('加载更多', 'next'); ?>
-    </div>
+<div class="post-read-more">
+<?php $this->pageLink('加载更多', 'next'); ?>
+</div>
 <?php endif; ?>  
 </div>
-<?php $this->need('sidebar.php'); ?>
-<?php $this->need('footer.php'); ?>
+<?php $this->need('sidebar.php');$this->need('footer.php'); ?>

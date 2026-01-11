@@ -9,7 +9,7 @@ if (!empty($slides)):
 	        <div class="row g-3">
 	            <div class="col-lg-7">   
 	                <div id="banner" class="carousel slide carousel-fade">
-                <!-- 指示器 -->
+                    <!-- 指示器 -->
                     <div class="carousel-indicators">
                     <?php foreach ($slides as $index => $post): ?>
                     <button type="button" 
@@ -17,27 +17,27 @@ if (!empty($slides)):
                     </button>
                     <?php endforeach; ?>
                     </div>
-		                    <!-- 幻灯片内容 -->
-		                    <div class="carousel-inner">
-			                    <?php foreach ($slides as $index => $post): ?>
-			                        <?php
-			                        $rawTitle = once_decode_html_entities_deep($post['title'] ?? '', 3);
-			                        $safeTitleAttr = once_esc_attr($rawTitle);
-			                        $safeTitleHtml = once_esc_html($rawTitle);
-			                        ?>
-			                        <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
-			                            <a class="banlist" href="<?php echo once_esc_url($post['permalink'] ?? ''); ?>">
-			                            <?php $result = get_post_thumbnail($post);$thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail']; ?>
-			                            <img src="<?php echo once_esc_url($thumbnail); ?>" 
-			                             alt="<?php echo $safeTitleAttr; ?>" 
-			                             decoding="async" 
-			                             class="post-images lazyload"
-			                             loading="lazy"
-			                             data-src="<?php echo once_esc_url($thumbnail); ?>"
-			                             onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';" />
-			                        <h2><?php echo $safeTitleHtml; ?></h2>
-			                        <i>置顶精彩</i>
-			                    </a>
+		            <!-- 幻灯片内容 -->
+		            <div class="carousel-inner">
+			            <?php foreach ($slides as $index => $post):
+			                $rawTitle = once_decode_html_entities_deep($post['title'] ?? '', 3);
+			                $safeTitleAttr = once_esc_attr($rawTitle);
+			                $safeTitleHtml = once_esc_html($rawTitle);
+			            ?>
+			            <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
+			                <a class="banlist" href="<?php echo once_esc_url($post['permalink'] ?? ''); ?>">
+			                <?php $result = get_post_thumbnail($post);$thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail']; ?>
+			                    <img src="<?php echo once_esc_url($thumbnail); ?>" 
+			                        alt="<?php echo $safeTitleAttr; ?>" 
+			                        decoding="async" 
+			                        class="post-images lazyload"
+			                        loading="lazy"
+			                        data-src="<?php echo once_esc_url($thumbnail); ?>"
+			                        onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';" 
+								/>
+			                    <h2><?php echo $safeTitleHtml; ?></h2>
+			                    <i>置顶精彩</i>
+			                </a>
 			                </div>
 			                <?php endforeach; ?>
 				            </div>
@@ -56,17 +56,16 @@ if (!empty($slides)):
 				    // 获取设置中的分类ID
 				    $midCenter = $this->options->midCenter;
 				    $midRight = $this->options->midRight;
-				    
 					    // 获取数据库实例
-					    $db = Typecho_Db::get();
-					    $contentsWidget = null;
-					    try {
+					$db = Typecho_Db::get();
+					$contentsWidget = null;
+					try {
 					        $contentsWidget = Typecho_Widget::widget('Widget_Abstract_Contents');
 					    } catch (Exception $e) {
-					    }
-					    ?>
-					    <div class="col-lg-2 none_992">
-					    <?php
+						}
+					?>
+					<div class="col-lg-2 none_992">
+					<?php
 				    // 中间展示（分类面板）
 				    if ($midCenter) {
 				        $midCenterID = intval($midCenter);
@@ -112,7 +111,7 @@ if (!empty($slides)):
 				                
 				                // 输出HTML
 				                echo '<a class="zt_list" href="' . $safePermalink . '" title="' . $safeTitleAttr . '">';
-				                echo '<img src="' . $safeThumb . '" decoding="async" loading="lazy" class="post-images-c lazyload" data-src="' . $safeThumb . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
+				                echo '<img src="' . $safeThumb . '" decoding="async" loading="lazy" class="post-images-c lazyload" data-src="' . $safeThumb . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" alt="' . $safeTitleAttr . '" />';
 				                echo '<h3>' . $safeTitleHtml . '</h3>';
 				                echo '<b>' . $safeCategoryHtml . '</b>';
 				                echo '</a>';
@@ -169,7 +168,7 @@ if (!empty($slides)):
 				            
 				            // 输出HTML
 				            echo '<a class="gglb" href="' . $safePermalink . '" title="' . $safeTitleAttr . '">';
-				            echo '<img src="' . $safeThumb . '" decoding="async" loading="lazy" class="post-images-r lazyload" data-src="' . $safeThumb . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" />';
+				            echo '<img src="' . $safeThumb . '" decoding="async" loading="lazy" class="post-images-r lazyload" data-src="' . $safeThumb . '" onerror="this.onerror=null;this.src=\'' . Helper::options()->themeUrl . '/assets/img/nopic.svg\';" alt="' . $safeTitleAttr . '" />';
 				            echo '<div class="gg_txt">
 				                    <h3>' . $safeTitleHtml . '</h3>
 				                    <p><i class="bi bi-clock"></i>' . date('Y-m-d', $rightPost['created']) . '</p>

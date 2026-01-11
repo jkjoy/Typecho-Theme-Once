@@ -1,5 +1,5 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-    </div>
+</div>
 </div>
 </section>
 <?php if ($this->options->showlinks): ?>
