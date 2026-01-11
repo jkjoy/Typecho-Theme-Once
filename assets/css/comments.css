@@ -120,9 +120,17 @@
         font-size: 12px;
     }
     
-    #comments .comment-list li .comment-body .reply a.comment-reply-link {
+    #comments .comment-list li .comment-body .reply .comment-reply-link {
         color: #333;
         font-weight: 300;
+    }
+
+    #comments .comment-list li .comment-body .reply button.comment-reply-link {
+        background: none;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+        color: inherit;
     }
     
     #comments .comment-list li ol.children {

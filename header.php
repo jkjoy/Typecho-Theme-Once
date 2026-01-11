@@ -86,12 +86,12 @@
                         <i class="bi bi-house-door-fill me-1"></i><?php _e('首页'); ?>
                         </a>
                     </li>
-                    <li class="menu-item-has-children">
-                        <a href="javascript:void(0);"><i class="bi bi-folder-fill me-1"></i><?php _e('分类'); ?></a>
-                        <ul class="sub-menu" style="display: none;">
-                        <?php $categories = Typecho_Widget::widget('Widget_Metas_Category_List'); while($categories->next()): ?>
-                        <li class="menu-item">
-                            <a href="<?php $categories->permalink(); ?>">
+	                    <li class="menu-item-has-children">
+	                        <button type="button" class="menu-parent"><i class="bi bi-folder-fill me-1"></i><?php _e('分类'); ?></button>
+	                        <ul class="sub-menu" style="display: none;">
+	                        <?php $categories = Typecho_Widget::widget('Widget_Metas_Category_List'); while($categories->next()): ?>
+	                        <li class="menu-item">
+	                            <a href="<?php $categories->permalink(); ?>">
                             <?php 
                             switch($categories->slug) {
                                 case 'images': echo '<i class="bi bi-images me-1"></i>';
@@ -199,13 +199,13 @@
 		        </li>
 		    <?php endwhile; ?>
             
-            <?php $this->widget('Widget_Metas_Category_List')->to($categories);if ($categories->have()): ?>
-            <li class="menu-item menu-item-has-children">
-                <a href="javascript:void(0);"><?php _e('分类'); ?></a>
-                <ul class="sub-menu">
-	            <?php while ($categories->next()): ?>
-	                <li class="menu-item">
-	                    <a href="<?php $categories->permalink(); ?>" title="<?php echo once_esc_attr($categories->name ?? ''); ?>"><?php echo once_esc_html($categories->name ?? ''); ?> (<?php echo (int)($categories->count ?? 0); ?>)</a>
+	            <?php $this->widget('Widget_Metas_Category_List')->to($categories);if ($categories->have()): ?>
+	            <li class="menu-item menu-item-has-children">
+	                <button type="button" class="menu-parent"><?php _e('分类'); ?></button>
+	                <ul class="sub-menu">
+		            <?php while ($categories->next()): ?>
+		                <li class="menu-item">
+		                    <a href="<?php $categories->permalink(); ?>" title="<?php echo once_esc_attr($categories->name ?? ''); ?>"><?php echo once_esc_html($categories->name ?? ''); ?> (<?php echo (int)($categories->count ?? 0); ?>)</a>
 	                </li>
 	            <?php endwhile; ?>
                 </ul>

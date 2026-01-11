@@ -62,9 +62,9 @@ function getPermalinkFromCoid($coid) {
 	                    <div class="comment-content">
 	                        <?php if ($comments->parent) {echo getPermalinkFromCoid((int)$comments->parent);} $comments->content(); ?>
 	                    </div><!-- .comment-content -->
-	                    <div class="reply">
-	                        <a rel="nofollow" class="comment-reply-link" href="javascript:void(0);" data-coid="<?php echo (int)$comments->coid; ?>">回复</a>
-	                    </div>
+		                    <div class="reply">
+		                        <button type="button" class="comment-reply-link" data-coid="<?php echo (int)$comments->coid; ?>">回复</button>
+		                    </div>
                 </article><!-- .comment-body -->
                 <?php if ($comments->children) { ?>
                     <ol class="children">
