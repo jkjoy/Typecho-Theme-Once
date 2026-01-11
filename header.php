@@ -69,7 +69,7 @@
 <header class="header sticky-top">
 <div class="container">
 	<div class="top">
-		<button class="mobile_an" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobile_right_nav" aria-controls="mobile_right_nav"><i class="bi bi-list"></i></button>
+			<button class="mobile_an" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobile_right_nav" aria-controls="mobile_right_nav" aria-label="打开菜单"><i class="bi bi-list"></i></button>
 			<div class="top_l">
 	            <h1 class="logo">
 	                <a href="<?php $this->options->siteUrl(); ?>" title="<?php echo once_esc_attr($this->options->description ?? ''); ?>">
@@ -150,9 +150,9 @@
         		<div class="top_r_an theme-switch me-4" onclick="window.switchDarkMode && window.switchDarkMode()">
                     <i class="bi bi-lightbulb-fill"></i>
                 </div>
-				<button class="top_r_an" type="button" data-bs-toggle="offcanvas" data-bs-target="#c_sousuo">
-                    <i class="bi bi-search"></i>
-                </button>
+					<button class="top_r_an" type="button" data-bs-toggle="offcanvas" data-bs-target="#c_sousuo" aria-label="打开搜索">
+	                    <i class="bi bi-search"></i>
+	                </button>
         	</div>
         </div>
 	</div>
