@@ -96,7 +96,7 @@ img{border:0;max-width:100%;height:auto;}
 .top .top_l{display:flex;align-items:center;}
 .top .top_l .logo{margin-bottom:0px;font-size:20px;margin-right:25px;min-height:30px;}
 .top .top_l .logo a{display:flex;align-items:center;}
-.top .top_l .logo a img{height:30px;width:30px;margin-right:10px;opacity:0;transition:opacity 0.3s ease;background-color:#f0f0f0;border-radius:4px;}
+.top .top_l .logo a img{height:30px;width:30px;object-fit:contain;margin-right:10px;opacity:0;transition:opacity 0.3s ease;background-color:#f0f0f0;border-radius:4px;}
 .top .top_l .logo a img.loaded{opacity:1;}
 .top .top_l .logo a b{letter-spacing:0.5px;}
 .top .top_r{}
@@ -106,7 +106,7 @@ img{border:0;max-width:100%;height:auto;}
 .top .top_r .top_r_an i{}
 @media (max-width:768px){
     .top .top_l .logo{margin-right:0px;min-height:22px;}
-    .top .top_l .logo a img{height:22px;}
+    .top .top_l .logo a img{height:22px;width:22px;}
     .top .top_r .top_r_an.theme-switch{display:none;}
 }
 
@@ -134,7 +134,7 @@ img{border:0;max-width:100%;height:auto;}
 #mobile_right_nav{width:300px;border:none;}
 #mobile_right_nav .mobile_head{padding:15px 22px;color:#fff;background:rgba(0,0,0,0.2);display:flex;justify-content:space-between;}
 #mobile_right_nav .mobile_head .mobile_head_logo{display:flex;align-items:center;color:#333;justify-content:center;}
-#mobile_right_nav .mobile_head .mobile_head_logo img{height:28px;width:28px;margin-right:10px;opacity:0;transition:opacity 0.3s ease;background-color:#f0f0f0;border-radius:4px;}
+#mobile_right_nav .mobile_head .mobile_head_logo img{height:28px;width:28px;object-fit:contain;margin-right:10px;opacity:0;transition:opacity 0.3s ease;background-color:#f0f0f0;border-radius:4px;}
 #mobile_right_nav .mobile_head .mobile_head_logo img.loaded{opacity:1;}
 #mobile_right_nav .mobile_head .mobile_head_logo b{}
 #mobile_right_nav .mobile_head .theme-switch{color:#333;background:#fff;width:30px;height:30px;border-radius:50%;border:none;text-align:center;display:flex;align-items:center;justify-content:center;font-size:12px;}
