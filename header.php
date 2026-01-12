@@ -59,12 +59,13 @@
         else document.documentElement.classList.remove("dark");
       })();
 </script>
-<link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/style.css'); ?>">
-<script src="<?php $this->options->themeUrl('assets/js/main.js'); ?>" defer></script>
-<?php if (isset($this->options->lxgw) && $this->options->lxgw == '1'): ?>
-<style>body, button, input, select, textarea {font-family: 'LXGW', sans-serif !important;}</style>
-<?php endif; ?>
-</head>
+	<link rel="stylesheet" href="<?php $this->options->themeUrl('assets/css/style.css'); ?>">
+	<script src="<?php $this->options->themeUrl('assets/js/main.js'); ?>" defer></script>
+	<?php if (isset($this->options->lxgw) && $this->options->lxgw == '1'): ?>
+	<link rel="preload" href="<?php $this->options->themeUrl('assets/css/fonts/lxgw.woff2'); ?>" as="font" type="font/woff2" crossorigin>
+	<style>body, button, input, select, textarea {font-family: 'LXGW', sans-serif !important;}</style>
+	<?php endif; ?>
+	</head>
 <body class="home blog">
 <header class="header sticky-top">
 <div class="container">
