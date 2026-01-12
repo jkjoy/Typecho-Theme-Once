@@ -1,6 +1,8 @@
 
 # Typecho-Theme-Once 主题
 
+![灯塔测试](./ScreenShot_2026.png)
+
 Once for Typecho 是一款简洁、美观的双栏博客主题。
 
 ## 主要功能特性
