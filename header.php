@@ -12,7 +12,6 @@
             'tag'      => _t('标签 %s 下的文章'),
             'author'   => _t('%s 发布的文章')
         ], '', ' - '); ?><?php $this->options->title(); ?> | <?php $this->options->description(); ?></title>
-<meta name="description" content="<?php echo once_esc_attr($this->options->description ?? ''); ?>" />
 <?php if ($this->options->faviconUrl): ?>
 <link rel="icon" href="<?php echo once_esc_url($this->options->faviconUrl ?? ''); ?>" type="image/x-icon" />
 <?php else: ?>
@@ -65,7 +64,8 @@
 	<link rel="preload" href="<?php $this->options->themeUrl('assets/css/fonts/lxgw.woff2'); ?>" as="font" type="font/woff2" crossorigin>
 	<style>body, button, input, select, textarea {font-family: 'LXGW', sans-serif !important;}</style>
 	<?php endif; ?>
-	</head>
+<?php $this->header(); ?>
+</head>
 <body class="home blog">
 <header class="header sticky-top">
 <div class="container">
