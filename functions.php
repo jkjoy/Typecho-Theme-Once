@@ -68,11 +68,12 @@ function themeConfig($form)
         [
             'ShowRecentPosts'    => _t('显示最新文章'),
             'ShowRecentComments' => _t('显示最近回复'),
+            'ShowHotCommentPosts'=> _t('显示热评文章'),
             'ShowHotPosts'       => _t('显示热门文章'),
-            'ShowTags'           => _t('显示标签'),
+            'ShowTags'           => _t('显示标签云'),
             'ShowOther'          => _t('显示其它杂项')
         ],
-        ['ShowRecentPosts', 'ShowRecentComments', 'ShowHotPosts', 'ShowTags', 'ShowOther'],
+        ['ShowRecentPosts', 'ShowRecentComments', 'ShowHotCommentPosts', 'ShowHotPosts', 'ShowTags', 'ShowOther'],
         _t('<span class="themeConfig"><h3>侧边栏设置</h3></span><div class="info">侧边栏显示</div>')
     );
     $form->addInput($sidebarBlock->multiMode());
@@ -80,9 +81,13 @@ function themeConfig($form)
     $recentarticle->input->setAttribute('class', 'w-10');
     $form->addInput($recentarticle->addRule('isInteger', _t('请填写整数数字')));
 
-    $hotarticle = new Typecho_Widget_Helper_Form_Element_Text('hotarticle', NULL, '5', _t('热门文章数量'), _t('默认数量5，侧边栏热门文章模块显示的文章数量'));
-    $hotarticle->input->setAttribute('class', 'w-10');
-    $form->addInput($hotarticle->addRule('isInteger', _t('请填写整数数字')));
+    $hotcommentarticle = new Typecho_Widget_Helper_Form_Element_Text('hotcommentarticle', NULL, '5', _t('热评文章数量'), _t('默认数量5，侧边栏热评文章模块显示的文章数量'));
+    $hotcommentarticle->input->setAttribute('class', 'w-10');
+    $form->addInput($hotcommentarticle->addRule('isInteger', _t('请填写整数数字')));
+
+    $hotviewarticle = new Typecho_Widget_Helper_Form_Element_Text('hotviewarticle', NULL, '5', _t('热门文章数量（按浏览）'), _t('默认数量5，侧边栏热门文章（按浏览）模块显示的文章数量'));
+    $hotviewarticle->input->setAttribute('class', 'w-10');
+    $form->addInput($hotviewarticle->addRule('isInteger', _t('请填写整数数字')));
 
     $hottags = new Typecho_Widget_Helper_Form_Element_Text('hottags', NULL, '20', _t('热门标签数量'), _t('默认数量20，侧边栏热门标签模块显示的标签数量'));
     $hottags->input->setAttribute('class', 'w-10');

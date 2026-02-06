@@ -77,12 +77,19 @@ $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&
 </div>
 <?php
 $sidebarBlock = !empty($this->options->sidebarBlock) ? (array)$this->options->sidebarBlock : array();
+if (!in_array('ShowHotCommentPosts', $sidebarBlock, true) && in_array('ShowHotPosts', $sidebarBlock, true)) {
+    $sidebarBlock[] = 'ShowHotCommentPosts';
+}
 
 // 侧边栏数量设置（主题设置项）
 $recentPostsCount = isset($this->options->recentarticle) ? intval($this->options->recentarticle) : 3;
 if ($recentPostsCount < 1) $recentPostsCount = 3;
-$hotPostsCount = isset($this->options->hotarticle) ? intval($this->options->hotarticle) : 5;
-if ($hotPostsCount < 1) $hotPostsCount = 5;
+$hotCommentPostsCount = isset($this->options->hotcommentarticle) ? intval($this->options->hotcommentarticle) : 5;
+if ($hotCommentPostsCount < 1) $hotCommentPostsCount = 5;
+
+$hotViewPostsCount = isset($this->options->hotviewarticle) ? intval($this->options->hotviewarticle) : 5;
+if ($hotViewPostsCount < 1) $hotViewPostsCount = 5;
+
 $hotTagsCount = isset($this->options->hottags) ? intval($this->options->hottags) : 20;
 if ($hotTagsCount < 1) $hotTagsCount = 20;
 
@@ -127,38 +134,52 @@ if (in_array('ShowRecentPosts', $sidebarBlock)): ?>
 </div>
 <?php endif; ?>
 
-<!-- 热门文章 -->
-<?php if (in_array('ShowHotPosts', $sidebarBlock)): ?>
+<!-- 热评文章 -->
+<?php if (in_array('ShowHotCommentPosts', $sidebarBlock)): ?>
 	    <?php
-	        $hotPostsView = null;
-	        $hotPostsCacheKey = 'once_sidebar_hot_posts_v1_' . $hotPostsCount;
+	        $hotCommentPostsView = null;
+	        $hotCommentPostsCacheKey = 'once_sidebar_hot_comment_posts_v2_' . $hotCommentPostsCount;
 	        if (function_exists('once_cache_get')) {
-	            $hotPostsView = once_cache_get($hotPostsCacheKey, $sidebarCacheTtl);
+	            $hotCommentPostsView = once_cache_get($hotCommentPostsCacheKey, $sidebarCacheTtl);
 	        }
-	        if (!is_array($hotPostsView)) {
+	        if (!is_array($hotCommentPostsView)) {
 	            try {
-	                $hotPosts = $db->fetchAll($db->select()
+	                $hotCommentPosts = $db->fetchAll($db->select()
 	                    ->from('table.contents')
 	                    ->where('type = ? AND status = ?', 'post', 'publish')
 	                    ->order('commentsNum', Typecho_Db::SORT_DESC)
-	                    ->limit($hotPostsCount)
+	                    ->limit($hotCommentPostsCount)
 	                );
 	            } catch (Exception $e) {
-	                $hotPosts = array();
+	                $hotCommentPosts = array();
 	            }
 
-	            $hotPostsView = array();
-	            if (!empty($hotPosts)) {
+	            $hotCommentPostsView = array();
+	            if (!empty($hotCommentPosts)) {
 	                $contentsWidget = Typecho_Widget::widget('Widget_Abstract_Contents');
-	                foreach ($hotPosts as $post) {
+	                foreach ($hotCommentPosts as $post) {
 	                    try {
-	                        $temp_post = $contentsWidget->filter($post);
-	                        $post_images = get_post_thumbnail($post);
-	                        $thumbnail = !empty($post_images['cropped_images']) ? $post_images['cropped_images'][0] : $post_images['thumbnail'];
-	                        $hotPostsView[] = array(
-	                            'title' => isset($temp_post['title']) ? (string)$temp_post['title'] : '',
-	                            'permalink' => isset($temp_post['permalink']) ? (string)$temp_post['permalink'] : '#',
-	                            'commentsNum' => isset($temp_post['commentsNum']) ? (int)$temp_post['commentsNum'] : 0,
+	                        $tempPost = $contentsWidget->filter($post);
+	                        $tempPostData = is_array($tempPost) ? $tempPost : (is_object($tempPost) ? (array)$tempPost : array());
+	                        $permalink = isset($tempPostData['permalink']) ? (string)$tempPostData['permalink'] : '';
+	                        if ($permalink === '') {
+	                            try {
+	                                $permalink = Typecho_Router::url('post', $post, $this->options->index);
+	                            } catch (Exception $e) {
+	                                try {
+	                                    $permalink = \Typecho\Router::url('post', $post, $this->options->index);
+	                                } catch (Exception $e2) {
+	                                    $permalink = '#';
+	                                }
+	                            }
+	                        }
+
+	                        $postImages = get_post_thumbnail($post);
+	                        $thumbnail = !empty($postImages['cropped_images']) ? $postImages['cropped_images'][0] : $postImages['thumbnail'];
+	                        $hotCommentPostsView[] = array(
+	                            'title' => isset($tempPostData['title']) ? (string)$tempPostData['title'] : (string)($post['title'] ?? ''),
+	                            'permalink' => $permalink,
+	                            'commentsNum' => isset($tempPostData['commentsNum']) ? (int)$tempPostData['commentsNum'] : (int)($post['commentsNum'] ?? 0),
 	                            'thumbnail' => (string)$thumbnail
 	                        );
 	                    } catch (Exception $e) {
@@ -168,17 +189,17 @@ if (in_array('ShowRecentPosts', $sidebarBlock)): ?>
 	            }
 
 	            if (function_exists('once_cache_set')) {
-	                @once_cache_set($hotPostsCacheKey, $hotPostsView);
+	                @once_cache_set($hotCommentPostsCacheKey, $hotCommentPostsView);
 	            }
 	        }
 
-	    if (!empty($hotPostsView)):
+	    if (!empty($hotCommentPostsView)):
 	    ?>
-	        <aside id="hot_posts-2" class="widget widget_hot_posts">
-	            <h3 class="widget-title">热门文章</h3>
+	        <aside id="hot_comment_posts-2" class="widget widget_hot_posts">
+	            <h3 class="widget-title">热评文章</h3>
 	            <ul class="widget_hot_post">
 	                <?php
-		                foreach ($hotPostsView as $item):
+		                foreach ($hotCommentPostsView as $item):
 		                    $rawTitle = once_decode_html_entities_deep((string)($item['title'] ?? ''), 3);
 		                    $title = once_esc_html($rawTitle);
 		                    $titleAttr = once_esc_attr($rawTitle);
@@ -210,8 +231,124 @@ if (in_array('ShowRecentPosts', $sidebarBlock)): ?>
 		            </ul>
 		        </aside>
 		    <?php else: ?>
+		        <p>无热评文章</p>
+	    <?php endif; ?>
+<?php endif; ?>
+
+<!-- 热门文章（按浏览数） -->
+<?php if (in_array('ShowHotPosts', $sidebarBlock)): ?>
+	    <?php
+	        $popularPostsView = null;
+	        $popularPostsCacheKey = 'once_sidebar_popular_posts_v2_' . $hotViewPostsCount;
+	        if (function_exists('once_cache_get')) {
+	            $popularPostsView = once_cache_get($popularPostsCacheKey, $sidebarCacheTtl);
+	        }
+
+	        if (!is_array($popularPostsView)) {
+	            $hasViewsColumn = false;
+	            try {
+	                $contentRow = $db->fetchRow($db->select()->from('table.contents')->limit(1));
+	                $hasViewsColumn = is_array($contentRow) && array_key_exists('views', $contentRow);
+	            } catch (Exception $e) {
+	                $hasViewsColumn = false;
+	            }
+
+	            try {
+	                $query = $db->select()
+	                    ->from('table.contents')
+	                    ->where('type = ? AND status = ?', 'post', 'publish');
+
+	                if ($hasViewsColumn) {
+	                    $query = $query->order('views', Typecho_Db::SORT_DESC);
+	                } else {
+	                    $query = $query->order('created', Typecho_Db::SORT_DESC);
+	                }
+
+	                $popularPosts = $db->fetchAll($query->limit($hotViewPostsCount));
+	            } catch (Exception $e) {
+	                $popularPosts = array();
+	            }
+
+	            $popularPostsView = array();
+	            if (!empty($popularPosts)) {
+	                $contentsWidget = Typecho_Widget::widget('Widget_Abstract_Contents');
+	                foreach ($popularPosts as $post) {
+	                    try {
+	                        $tempPost = $contentsWidget->filter($post);
+	                        $tempPostData = is_array($tempPost) ? $tempPost : (is_object($tempPost) ? (array)$tempPost : array());
+	                        $permalink = isset($tempPostData['permalink']) ? (string)$tempPostData['permalink'] : '';
+	                        if ($permalink === '') {
+	                            try {
+	                                $permalink = Typecho_Router::url('post', $post, $this->options->index);
+	                            } catch (Exception $e) {
+	                                try {
+	                                    $permalink = \Typecho\Router::url('post', $post, $this->options->index);
+	                                } catch (Exception $e2) {
+	                                    $permalink = '#';
+	                                }
+	                            }
+	                        }
+
+	                        $postImages = get_post_thumbnail($post);
+	                        $thumbnail = !empty($postImages['cropped_images']) ? $postImages['cropped_images'][0] : $postImages['thumbnail'];
+	                        $popularPostsView[] = array(
+	                            'title' => isset($tempPostData['title']) ? (string)$tempPostData['title'] : (string)($post['title'] ?? ''),
+	                            'permalink' => $permalink,
+	                            'views' => isset($post['views']) ? (int)$post['views'] : 0,
+	                            'thumbnail' => (string)$thumbnail
+	                        );
+	                    } catch (Exception $e) {
+	                        continue;
+	                    }
+	                }
+	            }
+
+	            if (function_exists('once_cache_set')) {
+	                @once_cache_set($popularPostsCacheKey, $popularPostsView);
+	            }
+	        }
+
+	    if (!empty($popularPostsView)):
+	    ?>
+	        <aside id="popular_posts-2" class="widget widget_hot_posts">
+	            <h3 class="widget-title">热门文章</h3>
+	            <ul class="widget_hot_post">
+	                <?php
+		                foreach ($popularPostsView as $item):
+		                    $rawTitle = once_decode_html_entities_deep((string)($item['title'] ?? ''), 3);
+		                    $title = once_esc_html($rawTitle);
+		                    $titleAttr = once_esc_attr($rawTitle);
+		                    $permalink = once_esc_url((string)($item['permalink'] ?? '#'));
+		                    $views = (int)($item['views'] ?? 0);
+		                    $thumbnail = once_esc_url((string)($item['thumbnail'] ?? ''));
+		                ?>
+	                        <li class="widget_hot_li">
+	                            <img width="400"
+	                                 height="280"
+	                                 src="<?php echo $thumbnail; ?>"
+	                                 data-src="<?php echo $thumbnail; ?>"
+	                                 class="thumbnail lazyload"
+	                                 alt="<?php echo $titleAttr; ?>"
+	                                 decoding="async"
+	                                 loading="lazy"
+	                                 onerror="this.onerror=null;this.src='<?php echo Helper::options()->themeUrl; ?>/assets/img/nopic.svg';" />
+	                            <div class="hot_post_info">
+	                                <h4>
+	                                    <a class="stretched-link"
+	                                       href="<?php echo $permalink; ?>">
+	                                        <?php echo $title; ?>
+	                                    </a>
+	                                </h4>
+	                                <p><?php echo $views; ?> 次阅读</p>
+	                            </div>
+		                        </li>
+		                <?php endforeach; ?>
+		            </ul>
+		        </aside>
+		    <?php else: ?>
 		        <p>无热门文章</p>
-	    <?php endif;endif; ?>
+	    <?php endif; ?>
+<?php endif; ?>
 
 <!-- 最近回复 -->
 <?php if (in_array('ShowRecentComments', $sidebarBlock)): ?>

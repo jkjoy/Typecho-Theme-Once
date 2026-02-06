@@ -109,7 +109,7 @@ $this->need('header.php'); ?>
 		            <div class="post_related_list">
 		                <?php
 		                $relatedRawTitle = once_decode_html_entities_deep($relatedPosts->title ?? '', 3);
-		                $relatedTitle = \Typecho\Common::subStr($relatedRawTitle, 0, 25, '...');
+		                $relatedTitle = \Typecho\Common::subStr($relatedRawTitle, 0, 80, '...');
 		                ?>
 		                <a href="<?php $relatedPosts->permalink(); ?>" class="" title="<?php echo once_esc_attr($relatedRawTitle); ?>">
 		                    <?php echo once_esc_html($relatedTitle); ?>
