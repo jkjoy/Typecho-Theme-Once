@@ -742,6 +742,7 @@ function getSlidesPosts() {
     if (empty($cids)) {
         return array();
     }
+
     // 查询文章
     $db = \Typecho\Db::get();
     try {
@@ -751,19 +752,61 @@ function getSlidesPosts() {
             ->where('cid IN ?', $cids)
             ->where('status = ?', 'publish')
             ->where('type = ?', 'post'));
+
         $postsMap = array();
         foreach ($posts as $post) {
             $postsMap[$post['cid']] = $post;
         }
+
         $sortedPosts = array();
         foreach ($cids as $cid) {
             if (isset($postsMap[$cid])) {
                 $sortedPosts[] = $postsMap[$cid];
             }
         }
-        return array_map(function($post) {
-            return \Typecho\Widget::widget('Widget_Abstract_Contents')->push($post);
-        }, $sortedPosts);    
+
+        $contentsWidget = null;
+        try {
+            $contentsWidget = Typecho_Widget::widget('Widget_Abstract_Contents');
+        } catch (Exception $e) {
+            try {
+                $contentsWidget = \Typecho\Widget::widget('Widget_Abstract_Contents');
+            } catch (Exception $e2) {
+            }
+        }
+
+        $result = array();
+        foreach ($sortedPosts as $post) {
+            $item = $post;
+
+            if ($contentsWidget) {
+                try {
+                    $filtered = $contentsWidget->filter($post);
+                    if (is_array($filtered)) {
+                        $item = $filtered;
+                    } elseif (is_object($filtered)) {
+                        $item = (array)$filtered;
+                    }
+                } catch (Exception $e) {
+                }
+            }
+
+            if (empty($item['permalink'])) {
+                try {
+                    $item['permalink'] = Typecho_Router::url('post', $post, $options->index);
+                } catch (Exception $e) {
+                    try {
+                        $item['permalink'] = \Typecho\Router::url('post', $post, $options->index);
+                    } catch (Exception $e2) {
+                        $item['permalink'] = '';
+                    }
+                }
+            }
+
+            $result[] = $item;
+        }
+
+        return $result;
     } catch (Exception $e) {
         return array();
     }
