@@ -53,7 +53,7 @@ function themeConfig($form)
         _t('输入文章的 CID，多个请用英文逗号或空格分隔，如：1,2,3 或 1 2 3')
     );
     $form->addInput($slidePosts);   
-    $midCenter = new Typecho_Widget_Helper_Form_Element_Text('midCenter', NULL, '', _t('中间展示分类,填写两个分类mid,用英文逗号或空格分隔'), _t('请输入分类的mid'));
+    $midCenter = new Typecho_Widget_Helper_Form_Element_Text('midCenter', NULL, '', _t('中间展示分类,填写一个分类mid'), _t('请输入分类的mid'));
     $form->addInput($midCenter);
     $midRight = new Typecho_Widget_Helper_Form_Element_Text('midRight', NULL, '', _t('右边展示分类,填写一个分类mid'), _t('请输入分类的mid'));
     $form->addInput($midRight);
@@ -74,7 +74,7 @@ function themeConfig($form)
             'ShowOther'          => _t('显示其它杂项')
         ],
         ['ShowRecentPosts', 'ShowRecentComments', 'ShowHotCommentPosts', 'ShowHotPosts', 'ShowTags', 'ShowOther'],
-        _t('<span class="themeConfig"><h3>侧边栏设置</h3></span><div class="info">侧边栏显示</div>')
+        _t('<span class="themeConfig"><h3>侧边栏设置</h3></span><div class="info">侧边栏相关的设置选项</div>')
     );
     $form->addInput($sidebarBlock->multiMode());
     $recentarticle = new Typecho_Widget_Helper_Form_Element_Text('recentarticle', NULL, '3', _t('最新文章数量'), _t('默认数量3，侧边栏最新文章模块显示的文章数量'));
@@ -92,7 +92,7 @@ function themeConfig($form)
     $hottags = new Typecho_Widget_Helper_Form_Element_Text('hottags', NULL, '20', _t('热门标签数量'), _t('默认数量20，侧边栏热门标签模块显示的标签数量'));
     $hottags->input->setAttribute('class', 'w-10');
     $form->addInput($hottags->addRule('isInteger', _t('请填写整数数字')));
-    $friend = new Typecho_Widget_Helper_Form_Element_Textarea('friend', NULL, NULL, _t('<span class="themeConfig"><h3>评论相关设置</h3></span><div class="info">好友认证</div>好友邮箱'), _t('一行一个邮箱地址,用于评论区好友等级认证'));
+    $friend = new Typecho_Widget_Helper_Form_Element_Textarea('friend', NULL, NULL, _t('<span class="themeConfig"><h3>评论相关设置</h3></span><div class="info">评论相关的设置项</div>好友邮箱'), _t('一行一个邮箱地址,用于评论区好友等级认证'));
     $form->addInput($friend);
     // 主题备份功能钩子
     if (function_exists('once_render_theme_backup_section')) {

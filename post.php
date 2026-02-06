@@ -119,5 +119,4 @@ $this->need('header.php'); ?>
 	    </div>	 
     <?php endif;$this->need('comments.php'); ?>
 </div><!-- #main-->
-<?php $this->need('sidebar.php'); ?>
-<?php $this->need('footer.php'); ?>
+<?php $this->need('sidebar.php');$this->need('footer.php'); ?>

@@ -1,5 +1,4 @@
-<?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-<?php
+<?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; 
 $isOnceJson = (isset($_GET['once_json']) && $_GET['once_json'] === '1');
 if ($isOnceJson) {
     $charset = $this->options->charset ? $this->options->charset : 'UTF-8';
@@ -32,8 +31,7 @@ if ($isOnceJson) {
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
-?>
-<?php $this->need('header.php'); ?>
+$this->need('header.php'); ?>
 <div class="col-lg-9">
     <?php if ($this->is('category')) ?>
         <div class="cat_info_top">
@@ -61,5 +59,4 @@ if ($this->_currentPage < $totalPages): ?>
     </div>
 <?php endif; ?>    
 </div>
-<?php $this->need('sidebar.php'); ?>
-<?php $this->need('footer.php'); ?>
+<?php $this->need('sidebar.php');$this->need('footer.php'); ?>

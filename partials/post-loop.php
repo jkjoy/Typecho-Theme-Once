@@ -1,5 +1,4 @@
-<?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-<?php
+<?php if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 $once_loop_image_lazy = isset($once_loop_image_lazy) ? (bool)$once_loop_image_lazy : true;
 $result = get_post_thumbnail($this);
 $thumbnail = !empty($result['cropped_images']) ? $result['cropped_images'][0] : $result['thumbnail'];

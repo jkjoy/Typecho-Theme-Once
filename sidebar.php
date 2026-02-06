@@ -77,9 +77,6 @@ $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&
 </div>
 <?php
 $sidebarBlock = !empty($this->options->sidebarBlock) ? (array)$this->options->sidebarBlock : array();
-if (!in_array('ShowHotCommentPosts', $sidebarBlock, true) && in_array('ShowHotPosts', $sidebarBlock, true)) {
-    $sidebarBlock[] = 'ShowHotCommentPosts';
-}
 
 // 侧边栏数量设置（主题设置项）
 $recentPostsCount = isset($this->options->recentarticle) ? intval($this->options->recentarticle) : 3;
