@@ -5,7 +5,7 @@
  * 原主题为Wordpress主题 原作者 huitheme 
  * @package  Once 
  * @author 老孙
- * @version 1.4.1
+ * @version 1.4.2
  * @link http://www.imsun.org
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;

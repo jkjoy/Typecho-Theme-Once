@@ -205,6 +205,157 @@ function onceInitCodeBlocks(root) {
   }
 }
 
+var onceLightboxState = {
+  container: null,
+  image: null,
+  caption: null,
+  closeBtn: null,
+  initialized: false
+};
+
+function onceIsImageHref(url) {
+  if (!url) return false;
+  if (/^data:image\//i.test(url) || /^blob:/i.test(url)) return true;
+  var cleanUrl = url.split('#')[0].split('?')[0];
+  return /\.(avif|bmp|gif|ico|jpe?g|jfif|png|svg|webp)$/i.test(cleanUrl);
+}
+
+function onceGetImageSrc(img) {
+  if (!img) return '';
+  return img.getAttribute('data-src') || img.getAttribute('src') || img.currentSrc || '';
+}
+
+function onceCloseImageLightbox() {
+  if (!onceLightboxState.container) return;
+  onceLightboxState.container.classList.remove('is-open');
+  onceLightboxState.container.setAttribute('aria-hidden', 'true');
+  if (onceLightboxState.image) {
+    onceLightboxState.image.removeAttribute('src');
+  }
+  if (onceLightboxState.caption) {
+    onceLightboxState.caption.textContent = '';
+    onceLightboxState.caption.style.display = 'none';
+  }
+  document.body.classList.remove('once-lightbox-open');
+}
+
+function onceEnsureLightbox() {
+  if (onceLightboxState.container) return onceLightboxState;
+
+  var lightbox = document.getElementById('once-lightbox');
+  if (!lightbox) {
+    lightbox = document.createElement('div');
+    lightbox.id = 'once-lightbox';
+    lightbox.className = 'once-lightbox';
+    lightbox.setAttribute('role', 'dialog');
+    lightbox.setAttribute('aria-modal', 'true');
+    lightbox.setAttribute('aria-hidden', 'true');
+    lightbox.innerHTML = '' +
+      '<button type="button" class="once-lightbox-close" aria-label="关闭预览">&times;</button>' +
+      '<img class="once-lightbox-image" alt="">' +
+      '<p class="once-lightbox-caption"></p>';
+    document.body.appendChild(lightbox);
+  }
+
+  onceLightboxState.container = lightbox;
+  onceLightboxState.image = lightbox.querySelector('.once-lightbox-image');
+  onceLightboxState.caption = lightbox.querySelector('.once-lightbox-caption');
+  onceLightboxState.closeBtn = lightbox.querySelector('.once-lightbox-close');
+
+  if (!onceLightboxState.initialized) {
+    lightbox.addEventListener('click', function(event) {
+      if (event.target === lightbox || event.target === onceLightboxState.closeBtn) {
+        onceCloseImageLightbox();
+      }
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && onceLightboxState.container && onceLightboxState.container.classList.contains('is-open')) {
+        onceCloseImageLightbox();
+      }
+    });
+
+    onceLightboxState.initialized = true;
+  }
+
+  return onceLightboxState;
+}
+
+function onceOpenImageLightbox(src, altText) {
+  if (!src) return;
+  var state = onceEnsureLightbox();
+  if (!state.image) return;
+
+  state.image.src = src;
+  state.image.alt = altText || '';
+
+  if (state.caption) {
+    if (altText) {
+      state.caption.textContent = altText;
+      state.caption.style.display = 'block';
+    } else {
+      state.caption.textContent = '';
+      state.caption.style.display = 'none';
+    }
+  }
+
+  state.container.classList.add('is-open');
+  state.container.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('once-lightbox-open');
+}
+
+function onceInitImageLightbox(root) {
+  var scope = root || document;
+  var articles = [];
+
+  if (scope.nodeType === 1 && scope.classList && scope.classList.contains('wznrys')) {
+    articles.push(scope);
+  }
+
+  if (scope.querySelectorAll) {
+    var foundArticles = scope.querySelectorAll('.wznrys');
+    for (var i = 0; i < foundArticles.length; i++) {
+      articles.push(foundArticles[i]);
+    }
+  }
+
+  for (var a = 0; a < articles.length; a++) {
+    var article = articles[a];
+    var images = article.querySelectorAll('img');
+    for (var j = 0; j < images.length; j++) {
+      (function(img) {
+        if (img.getAttribute('data-once-lightbox-bound') === '1') return;
+
+        var link = img.closest ? img.closest('a') : null;
+        var href = link ? (link.getAttribute('href') || '') : '';
+        var src = onceGetImageSrc(img);
+
+        if (link && href && !onceIsImageHref(href)) {
+          img.setAttribute('data-once-lightbox-bound', '1');
+          return;
+        }
+
+        if (href && onceIsImageHref(href)) {
+          src = href;
+        }
+
+        if (!src) return;
+
+        img.setAttribute('data-once-lightbox-bound', '1');
+        img.classList.add('once-lightboxable');
+
+        img.addEventListener('click', function(event) {
+          if (link && href) {
+            event.preventDefault();
+          }
+          event.stopPropagation();
+          onceOpenImageLightbox(src, img.getAttribute('alt') || img.getAttribute('title') || '');
+        });
+      })(images[j]);
+    }
+  }
+}
+
 jQuery(document).ready(function($){
   //table预设calss
   $('.wznrys table, .comment-content table')
@@ -212,6 +363,7 @@ jQuery(document).ready(function($){
     .not('.comment-content pre table')
     .addClass("table");
   onceInitCodeBlocks(document);
+  onceInitImageLightbox(document);
 });
 
 $(document).ready(function(){
@@ -475,7 +627,10 @@ function onceAppendNextPageHtml(data, $btn) {
   if ($newPosts.length > 0) {
     $('.post_box').append($newPosts);
     $newPosts.hide().fadeIn(300);
-    $newPosts.each(function() { onceInitCodeBlocks(this); });
+    $newPosts.each(function() {
+      onceInitCodeBlocks(this);
+      onceInitImageLightbox(this);
+    });
   }
 
   if ($newBtn.length > 0) {
@@ -502,7 +657,10 @@ function onceAppendNextPageJson(payload, $btn) {
   if ($newPosts.length > 0) {
     $('.post_box').append($newPosts);
     $newPosts.hide().fadeIn(300);
-    $newPosts.each(function() { onceInitCodeBlocks(this); });
+    $newPosts.each(function() {
+      onceInitCodeBlocks(this);
+      onceInitImageLightbox(this);
+    });
   }
 
   if (nextHref) {
@@ -603,6 +761,20 @@ document.addEventListener('DOMContentLoaded', function() {
   var mobileMenu = document.getElementById('mobile_right_nav');
   
   if (menuButton && mobileMenu) {
+    function closeMobileMenu() {
+      if (typeof bootstrap !== 'undefined') {
+        var offcanvasInstance = bootstrap.Offcanvas.getInstance(mobileMenu);
+        if (offcanvasInstance) {
+          offcanvasInstance.hide();
+        } else if (mobileMenu.classList.contains('show')) {
+          var bsOffcanvas = new bootstrap.Offcanvas(mobileMenu);
+          bsOffcanvas.hide();
+        }
+      } else {
+        mobileMenu.classList.remove('show');
+      }
+    }
+
     menuButton.addEventListener('click', function() {
       // 如果bootstrap对象存在，使用Bootstrap的API
       if (typeof bootstrap !== 'undefined') {
@@ -623,16 +795,18 @@ document.addEventListener('DOMContentLoaded', function() {
     var closeButton = mobileMenu.querySelector('.btn-close');
     if (closeButton) {
       closeButton.addEventListener('click', function() {
-        if (typeof bootstrap !== 'undefined') {
-          var offcanvasInstance = bootstrap.Offcanvas.getInstance(mobileMenu);
-          if (offcanvasInstance) {
-            offcanvasInstance.hide();
-          }
-        } else {
-          mobileMenu.classList.remove('show');
-        }
+        closeMobileMenu();
       });
     }
+
+    // 点击菜单外区域时关闭菜单（移动端）
+    document.addEventListener('click', function(event) {
+      var isMenuOpen = mobileMenu.classList.contains('show');
+      if (!isMenuOpen) return;
+      if (mobileMenu.contains(event.target)) return;
+      if (menuButton === event.target || menuButton.contains(event.target)) return;
+      closeMobileMenu();
+    });
   }
   
   // 处理搜索按钮点击事件

@@ -519,6 +519,18 @@ img{border:0;max-width:100%;height:auto;}
 .wznrys ol li a,
 .wznrys ul li a{border-bottom:1px solid #3ca5f6;color:#3ca5f6;}
 .wznrys p img{max-width:100%;height:auto}
+.wznrys img.once-lightboxable{cursor:zoom-in;}
+.once-lightbox{position:fixed;left:0;top:0;right:0;bottom:0;z-index:10000;padding:28px;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;}
+.once-lightbox.is-open{display:flex;}
+.once-lightbox-image{max-width:min(96vw,1200px);max-height:88vh;width:auto;height:auto;display:block;border-radius:8px;box-shadow:0 24px 60px rgba(0,0,0,.45);}
+.once-lightbox-close{position:absolute;right:20px;top:18px;width:40px;height:40px;border:none;border-radius:50%;font-size:30px;line-height:38px;text-align:center;background:rgba(255,255,255,.18);color:#fff;cursor:pointer;padding:0;}
+.once-lightbox-close:hover{background:rgba(255,255,255,.28);}
+.once-lightbox-caption{position:absolute;left:20px;right:20px;bottom:16px;margin:0;text-align:center;color:#fff;font-size:13px;line-height:1.6;text-shadow:0 2px 8px rgba(0,0,0,.5);}
+body.once-lightbox-open{overflow:hidden;}
+@media (max-width:768px){
+    .once-lightbox{padding:16px;}
+    .once-lightbox-image{max-height:82vh;}
+}
 .wznrys blockquote{margin:5px 0px 42px 0px;position:relative;border-radius:3px;font-size:inherit;padding:10px 25px 18px 25px;border-left:4px solid #e3e3e3;background-color:#f9f9f9;}
 .wznrys blockquote p{padding:0px 0px 5px 0px;font-weight:bold;font-size:16px;font-style:inherit;}
 .wznrys blockquote cite{padding-bottom:0;display:flex;font-size:14px;line-height:2;font-style:inherit;margin-top:6px;}
