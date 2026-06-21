@@ -14,22 +14,74 @@ $this->need('header.php'); ?>
             <?php $this->content(); ?>
             <div class="links-page">
                 <?php
-                if (!class_exists('Links_Plugin')) {
-                    echo '<p>请先安装 links 插件。</p>';
-                } else {
-                    try {
-                        $db = Typecho_Db::get();
-                        $links = $db->fetchAll($db->select()->from('table.links')->limit(1));
-                        if (empty($links)) {
-                            echo '<p>暂无友情链接数据。</p>';
-                        } else {
-                            echo '<div class="links-page-grid">';
-                            Links_Plugin::output('<li><a class="links-page-item" href="{url}" target="_blank" rel="me noopener" title="{title}"><span class="links-page-name">{name}</span><span class="links-page-desc">{title}</span></a></li>');
-                            echo '</div>';
+                try {
+                    $db = Typecho_Db::get();
+                    $prefix = $db->getPrefix();
+                    $links = $db->fetchAll(
+                        $db->select()
+                            ->from($prefix . 'links')
+                            ->where('state = ?', 1)
+                            ->order('sort', Typecho_Db::SORT_ASC)
+                            ->order($prefix . 'links.order', Typecho_Db::SORT_ASC)
+                    );
+
+                    if (empty($links)) {
+                        echo '<div class="page-empty">暂无友情链接数据。</div>';
+                    } else {
+                        $groups = [];
+                        foreach ($links as $link) {
+                            $sort = trim((string)($link['sort'] ?? ''));
+                            $group = $sort !== '' ? $sort : '默认分类';
+                            if (!isset($groups[$group])) {
+                                $groups[$group] = [];
+                            }
+                            $groups[$group][] = $link;
                         }
-                    } catch (Exception $e) {
-                        echo '<p>友情链接数据不可用：请确认 links 插件已启用并初始化数据表。</p>';
+
+                        echo '<div class="links-page-meta"><span>共 ' . count($links) . ' 个站点</span><span>' . count($groups) . ' 个分类</span></div>';
+                        foreach ($groups as $groupName => $groupLinks) {
+                            echo '<section class="links-group">';
+                            echo '<div class="links-group-head"><h2>' . once_esc_html($groupName) . '</h2><span>' . count($groupLinks) . '</span></div>';
+                            echo '<ul class="links-page-grid">';
+
+                            foreach ($groupLinks as $link) {
+                                $rawName = trim((string)($link['name'] ?? ''));
+                                $name = once_esc_html($rawName !== '' ? $rawName : '未命名站点');
+                                $url = once_esc_url($link['url'] ?? '#');
+                                $descriptionRaw = trim((string)($link['description'] ?? ''));
+                                $description = once_esc_html($descriptionRaw !== '' ? $descriptionRaw : ($link['url'] ?? ''));
+                                $title = once_esc_attr($descriptionRaw !== '' ? $descriptionRaw : $rawName);
+                                $image = once_esc_url($link['image'] ?? '');
+                                $initialSource = $rawName !== '' ? $rawName : '友';
+                                $initial = function_exists('mb_substr')
+                                    ? mb_substr($initialSource, 0, 1, once_charset())
+                                    : substr($initialSource, 0, 1);
+                                $initial = once_esc_html($initial);
+
+                                echo '<li class="links-page-card">';
+                                echo '<a class="links-page-item" href="' . $url . '" target="_blank" rel="me noopener" title="' . $title . '">';
+                                echo '<span class="links-page-avatar">';
+                                if ($image !== '') {
+                                    echo '<img src="' . $image . '" alt="' . once_esc_attr($rawName) . '" loading="lazy">';
+                                } else {
+                                    echo '<span>' . $initial . '</span>';
+                                }
+                                echo '</span>';
+                                echo '<span class="links-page-main">';
+                                echo '<span class="links-page-name">' . $name . '</span>';
+                                echo '<span class="links-page-desc">' . $description . '</span>';
+                                echo '</span>';
+                                echo '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>';
+                                echo '</a>';
+                                echo '</li>';
+                            }
+
+                            echo '</ul>';
+                            echo '</section>';
+                        }
                     }
+                } catch (Exception $e) {
+                    echo '<p>友情链接数据不可用：请确认 links 表已初始化。</p>';
                 }
                 ?>
             </div>
