@@ -1036,78 +1036,363 @@ function once_get_theme_version_from_index()
     return null;
 }
 
-function themeAutoUpgradeNotice()
+function once_get_theme_release_cache_file()
 {
-    // 1. 从 index.php 注释读取当前主题版本（@version）
-    $current_version = once_get_theme_version_from_index();
-    if (empty($current_version)) {
-        return;
-    }
-
-    // 2. 定义 GitHub API 地址
-    $api_url = 'https://api.github.com/repos/jkjoy/typecho-theme-once/releases/latest';
-
-    // 3. 设置缓存，避免每次请求都调用 API，减轻服务器压力
     $cache_dir = __TYPECHO_ROOT_DIR__ . '/usr/cache';
-    $cache_file = $cache_dir . '/once-version.json';
-    $cache_time = 12 * 3600; // 缓存12小时
-
-    // 确保缓存目录存在
-    if (!file_exists($cache_dir)) {
+    if (!is_dir($cache_dir)) {
         @mkdir($cache_dir, 0755, true);
     }
 
-    $latest_version = null;
-    
-    // 检查缓存文件是否存在且未过期
-    if (file_exists($cache_file) && (time() - filemtime($cache_file)) < $cache_time) {
-        $cache_data = json_decode(file_get_contents($cache_file), true);
-        if ($cache_data && isset($cache_data['tag_name'])) {
-            $latest_version = once_normalize_version($cache_data['tag_name']);
-        }
-    } else {
-        // 缓存过期或不存在，重新请求 API
-        $ctx = stream_context_create([
-            'http' => [
-                'header' => 'User-Agent: Typecho-Theme-Updater', // GitHub API 要求有 User-Agent
-                'timeout' => 10 // 设置超时时间
-            ]
-        ]);
-        
-        $response = @file_get_contents($api_url, false, $ctx);
+    return $cache_dir . '/once-version.json';
+}
 
-        if ($response) {
-            $release_data = json_decode($response, true);
-            if (isset($release_data['tag_name'])) {
-                $latest_version = once_normalize_version($release_data['tag_name']);
-                // 更新缓存文件
-                $result = file_put_contents($cache_file, json_encode(['tag_name' => $latest_version, 'time' => time()]));
-                // 如果缓存写入失败，记录错误但不影响显示
-                if (!$result) {
-                    error_log('Failed to write upgrade cache to ' . $cache_file);
-                }
-            }
-        } else {
-            // API请求失败，记录错误
-            error_log('Failed to fetch release data from ' . $api_url);
-            // 如果有旧缓存，使用旧缓存数据
-            if (file_exists($cache_file)) {
-                $cache_data = json_decode(file_get_contents($cache_file), true);
-                if ($cache_data && isset($cache_data['tag_name'])) {
-                    $latest_version = once_normalize_version($cache_data['tag_name']);
-                }
-            }
+function once_fetch_latest_release($force = false)
+{
+    $api_url = 'https://api.github.com/repos/jkjoy/typecho-theme-once/releases/latest';
+    $cache_file = once_get_theme_release_cache_file();
+    $cache_time = 12 * 3600;
+
+    if (!$force && is_file($cache_file) && (time() - filemtime($cache_file)) < $cache_time) {
+        $cache_data = json_decode((string)@file_get_contents($cache_file), true);
+        if (is_array($cache_data) && !empty($cache_data['tag_name'])) {
+            $cache_data['version'] = once_normalize_version($cache_data['tag_name']);
+            return $cache_data;
         }
     }
-    // 4. 如果获取到了最新版本，则进行比较
+
+    if (!ini_get('allow_url_fopen')) {
+        return null;
+    }
+
+    $ctx = stream_context_create([
+        'http' => [
+            'header' => "User-Agent: Typecho-Theme-Updater\r\nAccept: application/vnd.github+json",
+            'timeout' => 15
+        ]
+    ]);
+
+    $response = @file_get_contents($api_url, false, $ctx);
+    if ($response) {
+        $release_data = json_decode($response, true);
+        if (is_array($release_data) && !empty($release_data['tag_name'])) {
+            $release_data['version'] = once_normalize_version($release_data['tag_name']);
+            @file_put_contents($cache_file, json_encode([
+                'tag_name' => (string)$release_data['tag_name'],
+                'version' => (string)$release_data['version'],
+                'zipball_url' => (string)($release_data['zipball_url'] ?? ''),
+                'html_url' => (string)($release_data['html_url'] ?? ''),
+                'time' => time()
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            return $release_data;
+        }
+    }
+
+    error_log('Failed to fetch release data from ' . $api_url);
+    if (is_file($cache_file)) {
+        $cache_data = json_decode((string)@file_get_contents($cache_file), true);
+        if (is_array($cache_data) && !empty($cache_data['tag_name'])) {
+            $cache_data['version'] = once_normalize_version($cache_data['tag_name']);
+            return $cache_data;
+        }
+    }
+
+    return null;
+}
+
+function once_get_latest_theme_update()
+{
+    $current_version = once_get_theme_version_from_index();
+    if (empty($current_version)) {
+        return null;
+    }
+
+    $release = once_fetch_latest_release(false);
+    if (!$release || empty($release['version'])) {
+        return null;
+    }
+
+    $latest_version = once_normalize_version($release['version']);
     if ($latest_version && version_compare(once_normalize_version($current_version), once_normalize_version($latest_version), '<')) {
-        
-        $notice_html = '
+        return [
+            'current_version' => $current_version,
+            'latest_version' => $latest_version,
+            'zipball_url' => (string)($release['zipball_url'] ?? ''),
+            'html_url' => (string)($release['html_url'] ?? 'https://github.com/jkjoy/typecho-theme-once/releases/latest')
+        ];
+    }
+
+    return null;
+}
+
+function themeAutoUpgradeNotice()
+{
+    $update = once_get_latest_theme_update();
+    if (!$update) {
+        return;
+    }
+
+    $current_version = htmlspecialchars((string)$update['current_version'], ENT_QUOTES, 'UTF-8');
+    $latest_version = htmlspecialchars((string)$update['latest_version'], ENT_QUOTES, 'UTF-8');
+    $release_url = htmlspecialchars((string)$update['html_url'], ENT_QUOTES, 'UTF-8');
+    $update_url = htmlspecialchars(\Widget\Security::alloc()->getAdminUrl('options-theme.php?once_update=upgrade'), ENT_QUOTES, 'UTF-8');
+
+    $notice_html = '
         <span class="themeConfig"><h3>主题更新</h3>
             <div class="info">发现新版本 ' . $latest_version . '，您当前使用的是 ' . $current_version . '。建议立即更新以获得最新功能和安全性修复。
-                <a href="https://github.com/jkjoy/typecho-theme-once/releases/latest" target="_blank">查看更新</a>
-                <a href="https://github.com/jkjoy/typecho-theme-once/releases" target="_blank">立即下载</a>
+                <a href="' . $release_url . '" target="_blank" rel="noopener">查看更新</a>
+                <form method="post" action="' . $update_url . '" style="display:inline;margin-left:8px;" onsubmit="return confirm(\'在线更新会先备份当前主题文件，然后从 GitHub 下载最新版本并覆盖当前主题目录。确认继续？\');">
+                    <button type="submit" class="btn primary">在线更新</button>
+                </form>
             </div>';
-        echo $notice_html;
+    echo $notice_html;
+}
+
+function once_theme_update_workspace()
+{
+    $dir = __TYPECHO_ROOT_DIR__ . '/usr/cache/once-theme-updates';
+    if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
+        throw new Exception('无法创建更新缓存目录');
+    }
+    if (!is_writable($dir)) {
+        throw new Exception('更新缓存目录不可写');
+    }
+
+    return $dir;
+}
+
+function once_create_theme_file_backup($theme_dir, $workspace)
+{
+    if (!class_exists('ZipArchive')) {
+        throw new Exception('服务器未启用 ZipArchive，无法创建更新前备份');
+    }
+
+    $backup_dir = $workspace . '/backups';
+    if (!is_dir($backup_dir) && !@mkdir($backup_dir, 0755, true)) {
+        throw new Exception('无法创建主题备份目录');
+    }
+
+    $theme_name = basename($theme_dir);
+    $backup_file = $backup_dir . '/' . $theme_name . '-backup-' . date('Ymd-His') . '.zip';
+    $zip = new ZipArchive();
+    if ($zip->open($backup_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        throw new Exception('无法创建主题备份文件');
+    }
+
+    $base_len = strlen(rtrim($theme_dir, '/\\')) + 1;
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($theme_dir, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+
+    foreach ($iterator as $file) {
+        $path = $file->getPathname();
+        $relative = str_replace('\\', '/', substr($path, $base_len));
+        if ($relative === '' || strpos($relative, '.git/') === 0 || $relative === '.git') {
+            continue;
+        }
+
+        if ($file->isDir()) {
+            $zip->addEmptyDir($relative);
+        } elseif ($file->isFile()) {
+            $zip->addFile($path, $relative);
+        }
+    }
+
+    $zip->close();
+    return $backup_file;
+}
+
+function once_remove_directory($dir, $allowed_base)
+{
+    $dir_real = realpath($dir);
+    $base_real = realpath($allowed_base);
+    if (!$dir_real || !$base_real || strpos($dir_real, $base_real) !== 0) {
+        return false;
+    }
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($dir_real, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+
+    foreach ($iterator as $file) {
+        if ($file->isDir()) {
+            @rmdir($file->getPathname());
+        } else {
+            @unlink($file->getPathname());
+        }
+    }
+
+    return @rmdir($dir_real);
+}
+
+function once_find_extracted_theme_root($extract_dir)
+{
+    if (is_file($extract_dir . '/index.php')) {
+        return $extract_dir;
+    }
+
+    $items = scandir($extract_dir);
+    if (!$items) {
+        return null;
+    }
+
+    foreach ($items as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+
+        $path = $extract_dir . '/' . $item;
+        if (is_dir($path) && is_file($path . '/index.php')) {
+            return $path;
+        }
+    }
+
+    return null;
+}
+
+function once_copy_directory_overwrite($source, $target)
+{
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($source, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+
+    $source_len = strlen(rtrim($source, '/\\')) + 1;
+    foreach ($iterator as $file) {
+        $relative = substr($file->getPathname(), $source_len);
+        $target_path = $target . DIRECTORY_SEPARATOR . $relative;
+
+        if ($file->isDir()) {
+            if (!is_dir($target_path) && !@mkdir($target_path, 0755, true)) {
+                throw new Exception('无法创建目录：' . $relative);
+            }
+            continue;
+        }
+
+        $target_dir = dirname($target_path);
+        if (!is_dir($target_dir) && !@mkdir($target_dir, 0755, true)) {
+            throw new Exception('无法创建目录：' . dirname($relative));
+        }
+        if (!@copy($file->getPathname(), $target_path)) {
+            throw new Exception('无法覆盖文件：' . $relative);
+        }
     }
 }
+
+function once_upgrade_theme_from_github()
+{
+    if (!class_exists('ZipArchive')) {
+        throw new Exception('服务器未启用 ZipArchive，无法解压主题更新包');
+    }
+    if (!ini_get('allow_url_fopen')) {
+        throw new Exception('服务器未启用 allow_url_fopen，无法下载 GitHub 更新包');
+    }
+
+    $update = once_get_latest_theme_update();
+    if (!$update) {
+        return '当前已是最新版本';
+    }
+
+    $release = once_fetch_latest_release(true);
+    $zip_url = (string)($release['zipball_url'] ?? $update['zipball_url'] ?? '');
+    if ($zip_url === '') {
+        throw new Exception('未获取到 GitHub 更新包地址');
+    }
+
+    $theme_dir = realpath(__DIR__);
+    if (!$theme_dir || !is_dir($theme_dir) || !is_writable($theme_dir)) {
+        throw new Exception('当前主题目录不可写，无法在线更新');
+    }
+
+    $workspace = once_theme_update_workspace();
+    $job_dir = $workspace . '/update-' . date('YmdHis') . '-' . mt_rand(1000, 9999);
+    $extract_dir = $job_dir . '/extract';
+    if (!@mkdir($extract_dir, 0755, true)) {
+        throw new Exception('无法创建临时解压目录');
+    }
+
+    $zip_file = $job_dir . '/latest.zip';
+    try {
+        $backup_file = once_create_theme_file_backup($theme_dir, $workspace);
+
+        $ctx = stream_context_create([
+            'http' => [
+                'header' => "User-Agent: Typecho-Theme-Updater\r\nAccept: application/octet-stream",
+                'timeout' => 60
+            ]
+        ]);
+        $zip_data = @file_get_contents($zip_url, false, $ctx);
+        if (!$zip_data) {
+            throw new Exception('下载 GitHub 更新包失败');
+        }
+        if (@file_put_contents($zip_file, $zip_data) === false) {
+            throw new Exception('写入更新包失败');
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($zip_file) !== true) {
+            throw new Exception('更新包不是有效的 zip 文件');
+        }
+        if (!$zip->extractTo($extract_dir)) {
+            $zip->close();
+            throw new Exception('解压更新包失败');
+        }
+        $zip->close();
+
+        $source = once_find_extracted_theme_root($extract_dir);
+        if (!$source) {
+            throw new Exception('更新包内未找到有效主题文件');
+        }
+
+        once_copy_directory_overwrite($source, $theme_dir);
+        @file_put_contents(once_get_theme_release_cache_file(), json_encode([
+            'tag_name' => (string)($release['tag_name'] ?? $update['latest_version']),
+            'version' => (string)$update['latest_version'],
+            'zipball_url' => $zip_url,
+            'html_url' => (string)($release['html_url'] ?? $update['html_url']),
+            'time' => time()
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+        return '主题已更新到 ' . $update['latest_version'] . '。更新前备份：' . basename($backup_file);
+    } finally {
+        once_remove_directory($job_dir, $workspace);
+    }
+}
+
+function once_handle_theme_update_request()
+{
+    if (!defined('__TYPECHO_ADMIN__') || empty($_GET['once_update']) || $_GET['once_update'] !== 'upgrade') {
+        return;
+    }
+
+    $user = \Widget\User::alloc();
+    if (!$user->pass('administrator', true)) {
+        http_response_code(403);
+        exit;
+    }
+
+    $security = \Widget\Security::alloc();
+    $security->protect();
+
+    if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+        http_response_code(405);
+        exit;
+    }
+
+    if (function_exists('once_clear_output_buffers')) {
+        once_clear_output_buffers();
+    }
+
+    try {
+        $message = once_upgrade_theme_from_github();
+        \Widget\Notice::alloc()->set(_t($message), 'success');
+    } catch (Exception $e) {
+        \Widget\Notice::alloc()->set(_t('主题在线更新失败：%s', $e->getMessage()), 'error');
+    }
+
+    header('Location: ' . \Typecho\Common::url('options-theme.php', Helper::options()->adminUrl));
+    exit;
+}
+
+once_handle_theme_update_request();

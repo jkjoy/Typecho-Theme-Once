@@ -19,10 +19,14 @@ $this->need('header.php'); ?>
                 } else {
                     try {
                         $db = Typecho_Db::get();
-                        $db->fetchAll($db->select()->from('table.links')->limit(1));
-                        echo '<div class="links-page-grid">';
-                        Links_Plugin::output('<li><a class="links-page-item" href="{url}" target="_blank" rel="me noopener" title="{title}"><span class="links-page-name">{name}</span><span class="links-page-desc">{title}</span></a></li>');
-                        echo '</div>';
+                        $links = $db->fetchAll($db->select()->from('table.links')->limit(1));
+                        if (empty($links)) {
+                            echo '<p>暂无友情链接数据。</p>';
+                        } else {
+                            echo '<div class="links-page-grid">';
+                            Links_Plugin::output('<li><a class="links-page-item" href="{url}" target="_blank" rel="me noopener" title="{title}"><span class="links-page-name">{name}</span><span class="links-page-desc">{title}</span></a></li>');
+                            echo '</div>';
+                        }
                     } catch (Exception $e) {
                         echo '<p>友情链接数据不可用：请确认 links 插件已启用并初始化数据表。</p>';
                     }
