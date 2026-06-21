@@ -4,7 +4,6 @@ require_once __DIR__ . '/partials/backup.php';
 function themeConfig($form)
 {   
     echo '<style>.typecho-page-title h2 {font-weight: 600;color: #737373;}.typecho-page-title h2:before {content: "#";margin-right: 6px;color:#00b2ff; font-size: 20px;font-weight: 600;}.themeConfig h3 {color: #737373;font-size: 20px;}.themeConfig h3:before {content: "[";margin-right: 5px;color:#00b2ff;font-size: 25px;}.themeConfig h3:after {content: "]";margin-left: 5px;color: #00b2ff;font-size: 25px;}.info{border: 1px solid #4d75b3;padding: 20px;margin: -15px 10px 25px 0;background: #ffffff;border-radius: 5px;color: #0984E3;}.info a{color: #ff004c;}</style>';
-    once_render_theme_update_result();
     themeAutoUpgradeNotice();
     $logoUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'logoUrl',
@@ -1100,16 +1099,37 @@ function themeAutoUpgradeNotice()
     $current_version = htmlspecialchars((string)$update['current_version'], ENT_QUOTES, 'UTF-8');
     $latest_version = htmlspecialchars((string)$update['latest_version'], ENT_QUOTES, 'UTF-8');
     $release_url = htmlspecialchars((string)$update['html_url'], ENT_QUOTES, 'UTF-8');
-    $update_url = htmlspecialchars(\Widget\Security::alloc()->getAdminUrl('options-theme.php?once_update=upgrade'), ENT_QUOTES, 'UTF-8');
-
     $notice_html = '
         <span class="themeConfig"><h3>主题更新</h3>
             <div class="info">发现新版本 ' . $latest_version . '，您当前使用的是 ' . $current_version . '。建议立即更新以获得最新功能和安全性修复。
                 <a href="' . $release_url . '" target="_blank" rel="noopener">查看更新</a>
-                <form method="post" action="' . $update_url . '" style="display:inline;margin-left:8px;" onsubmit="return confirm(\'在线更新会先备份当前主题文件，然后从 GitHub 下载最新版本并覆盖当前主题目录。确认继续？\');">
-                    <button type="submit" class="btn primary">在线更新</button>
-                </form>
-            </div>';
+                <button type="button" class="btn primary" id="once-theme-update-btn" style="margin-left:8px;">在线更新</button>
+            </div>
+            <script>
+            (function(){
+                var btn = document.getElementById("once-theme-update-btn");
+                if (!btn) return;
+                btn.addEventListener("click", function(){
+                    if (!confirm("在线更新会先备份当前主题文件，然后从 GitHub 下载最新版本并覆盖当前主题目录。确认继续？")) return;
+                    var form = document.querySelector("form[action*=themes-edit]");
+                    if (!form) {
+                        alert("未找到主题设置表单，无法提交在线更新。");
+                        return;
+                    }
+                    var input = form.querySelector("input[name=once_update]");
+                    if (!input) {
+                        input = document.createElement("input");
+                        input.type = "hidden";
+                        input.name = "once_update";
+                        form.appendChild(input);
+                    }
+                    input.value = "upgrade";
+                    btn.disabled = true;
+                    btn.textContent = "更新中...";
+                    form.submit();
+                });
+            })();
+            </script>';
     echo $notice_html;
 }
 
@@ -1284,13 +1304,17 @@ function once_upgrade_theme_from_github()
 
         $ctx = stream_context_create([
             'http' => [
-                'header' => "User-Agent: Typecho-Theme-Updater\r\nAccept: application/octet-stream",
-                'timeout' => 60
+                'header' => "User-Agent: Typecho-Theme-Updater\r\nAccept: application/vnd.github+json",
+                'timeout' => 60,
+                'ignore_errors' => true,
+                'follow_location' => 1,
+                'max_redirects' => 5
             ]
         ]);
         $zip_data = @file_get_contents($zip_url, false, $ctx);
-        if (!$zip_data) {
-            throw new Exception('下载 GitHub 更新包失败');
+        $status = $http_response_header[0] ?? '';
+        if (!$zip_data || substr($zip_data, 0, 2) !== 'PK') {
+            throw new Exception('下载 GitHub 更新包失败' . ($status ? '：' . $status : ''));
         }
         if (@file_put_contents($zip_file, $zip_data) === false) {
             throw new Exception('写入更新包失败');
@@ -1319,80 +1343,24 @@ function once_upgrade_theme_from_github()
     }
 }
 
-function once_render_theme_update_result()
+function themeConfigHandle($settings, $isInit)
 {
-    if (empty($GLOBALS['once_theme_update_result']) || !is_array($GLOBALS['once_theme_update_result'])) {
-        return;
+    if ($isInit) {
+        return false;
     }
 
-    $result = $GLOBALS['once_theme_update_result'];
-    $type = (string)($result['type'] ?? 'notice');
-    $message = htmlspecialchars((string)($result['message'] ?? ''), ENT_QUOTES, 'UTF-8');
-    if ($message === '') {
-        return;
-    }
-
-    $border = $type === 'success' ? '#2f9e44' : '#e55353';
-    $color = $type === 'success' ? '#2f9e44' : '#d9480f';
-
-    echo '<div class="info" style="border-color:' . $border . ';color:' . $color . ';margin-bottom:18px;">' . $message . '</div>';
-    echo '<script>
-    (function(){
-        if (!window.history || !window.history.replaceState) return;
-        var url = new URL(window.location.href);
-        if (url.searchParams.has("once_update")) {
-            url.searchParams.delete("once_update");
-            url.searchParams.delete("_");
-            window.history.replaceState(null, document.title, url.pathname + url.search + url.hash);
+    if (isset($_POST['once_update']) && $_POST['once_update'] === 'upgrade') {
+        try {
+            $message = once_upgrade_theme_from_github();
+            \Widget\Notice::alloc()->set(_t($message), 'success');
+        } catch (Exception $e) {
+            \Widget\Notice::alloc()->set(_t('主题在线更新失败：%s', $e->getMessage()), 'error');
         }
-    })();
-    </script>';
-}
 
-function once_handle_theme_update_request()
-{
-    if (!defined('__TYPECHO_ADMIN__') || empty($_GET['once_update']) || $_GET['once_update'] !== 'upgrade') {
-        return;
-    }
-
-    $user = \Widget\User::alloc();
-    if (!$user->pass('administrator', true)) {
-        http_response_code(403);
+        header('Location: ' . \Typecho\Common::url('options-theme.php', Helper::options()->adminUrl));
         exit;
     }
 
-    $security = \Widget\Security::alloc();
-    $security->protect();
-
-    if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
-        http_response_code(405);
-        exit;
-    }
-
-    if (!headers_sent() && function_exists('once_clear_output_buffers')) {
-        once_clear_output_buffers();
-    }
-
-    $notice_type = 'success';
-    try {
-        $message = once_upgrade_theme_from_github();
-        \Widget\Notice::alloc()->set(_t($message), 'success');
-    } catch (Exception $e) {
-        $notice_type = 'error';
-        $message = _t('主题在线更新失败：%s', $e->getMessage());
-        \Widget\Notice::alloc()->set($message, 'error');
-    }
-
-    if (headers_sent()) {
-        $GLOBALS['once_theme_update_result'] = [
-            'type' => $notice_type,
-            'message' => $message
-        ];
-        return;
-    }
-
-    header('Location: ' . \Typecho\Common::url('options-theme.php', Helper::options()->adminUrl));
-    exit;
+    once_save_theme_settings_to_db(once_sanitize_imported_settings($settings));
+    return true;
 }
-
-once_handle_theme_update_request();
