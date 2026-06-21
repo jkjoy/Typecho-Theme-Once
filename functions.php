@@ -4,6 +4,7 @@ require_once __DIR__ . '/partials/backup.php';
 function themeConfig($form)
 {   
     echo '<style>.typecho-page-title h2 {font-weight: 600;color: #737373;}.typecho-page-title h2:before {content: "#";margin-right: 6px;color:#00b2ff; font-size: 20px;font-weight: 600;}.themeConfig h3 {color: #737373;font-size: 20px;}.themeConfig h3:before {content: "[";margin-right: 5px;color:#00b2ff;font-size: 25px;}.themeConfig h3:after {content: "]";margin-left: 5px;color: #00b2ff;font-size: 25px;}.info{border: 1px solid #4d75b3;padding: 20px;margin: -15px 10px 25px 0;background: #ffffff;border-radius: 5px;color: #0984E3;}.info a{color: #ff004c;}</style>';
+    once_render_theme_update_result();
     themeAutoUpgradeNotice();
     $logoUrl = new \Typecho\Widget\Helper\Form\Element\Text(
         'logoUrl',
@@ -1036,29 +1037,9 @@ function once_get_theme_version_from_index()
     return null;
 }
 
-function once_get_theme_release_cache_file()
-{
-    $cache_dir = __TYPECHO_ROOT_DIR__ . '/usr/cache';
-    if (!is_dir($cache_dir)) {
-        @mkdir($cache_dir, 0755, true);
-    }
-
-    return $cache_dir . '/once-version.json';
-}
-
-function once_fetch_latest_release($force = false)
+function once_fetch_latest_release()
 {
     $api_url = 'https://api.github.com/repos/jkjoy/typecho-theme-once/releases/latest';
-    $cache_file = once_get_theme_release_cache_file();
-    $cache_time = 12 * 3600;
-
-    if (!$force && is_file($cache_file) && (time() - filemtime($cache_file)) < $cache_time) {
-        $cache_data = json_decode((string)@file_get_contents($cache_file), true);
-        if (is_array($cache_data) && !empty($cache_data['tag_name'])) {
-            $cache_data['version'] = once_normalize_version($cache_data['tag_name']);
-            return $cache_data;
-        }
-    }
 
     if (!ini_get('allow_url_fopen')) {
         return null;
@@ -1076,26 +1057,11 @@ function once_fetch_latest_release($force = false)
         $release_data = json_decode($response, true);
         if (is_array($release_data) && !empty($release_data['tag_name'])) {
             $release_data['version'] = once_normalize_version($release_data['tag_name']);
-            @file_put_contents($cache_file, json_encode([
-                'tag_name' => (string)$release_data['tag_name'],
-                'version' => (string)$release_data['version'],
-                'zipball_url' => (string)($release_data['zipball_url'] ?? ''),
-                'html_url' => (string)($release_data['html_url'] ?? ''),
-                'time' => time()
-            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
             return $release_data;
         }
     }
 
     error_log('Failed to fetch release data from ' . $api_url);
-    if (is_file($cache_file)) {
-        $cache_data = json_decode((string)@file_get_contents($cache_file), true);
-        if (is_array($cache_data) && !empty($cache_data['tag_name'])) {
-            $cache_data['version'] = once_normalize_version($cache_data['tag_name']);
-            return $cache_data;
-        }
-    }
-
     return null;
 }
 
@@ -1106,7 +1072,7 @@ function once_get_latest_theme_update()
         return null;
     }
 
-    $release = once_fetch_latest_release(false);
+    $release = once_fetch_latest_release();
     if (!$release || empty($release['version'])) {
         return null;
     }
@@ -1294,7 +1260,7 @@ function once_upgrade_theme_from_github()
         return '当前已是最新版本';
     }
 
-    $release = once_fetch_latest_release(true);
+    $release = once_fetch_latest_release();
     $zip_url = (string)($release['zipball_url'] ?? $update['zipball_url'] ?? '');
     if ($zip_url === '') {
         throw new Exception('未获取到 GitHub 更新包地址');
@@ -1346,18 +1312,41 @@ function once_upgrade_theme_from_github()
         }
 
         once_copy_directory_overwrite($source, $theme_dir);
-        @file_put_contents(once_get_theme_release_cache_file(), json_encode([
-            'tag_name' => (string)($release['tag_name'] ?? $update['latest_version']),
-            'version' => (string)$update['latest_version'],
-            'zipball_url' => $zip_url,
-            'html_url' => (string)($release['html_url'] ?? $update['html_url']),
-            'time' => time()
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         return '主题已更新到 ' . $update['latest_version'] . '。更新前备份：' . basename($backup_file);
     } finally {
         once_remove_directory($job_dir, $workspace);
     }
+}
+
+function once_render_theme_update_result()
+{
+    if (empty($GLOBALS['once_theme_update_result']) || !is_array($GLOBALS['once_theme_update_result'])) {
+        return;
+    }
+
+    $result = $GLOBALS['once_theme_update_result'];
+    $type = (string)($result['type'] ?? 'notice');
+    $message = htmlspecialchars((string)($result['message'] ?? ''), ENT_QUOTES, 'UTF-8');
+    if ($message === '') {
+        return;
+    }
+
+    $border = $type === 'success' ? '#2f9e44' : '#e55353';
+    $color = $type === 'success' ? '#2f9e44' : '#d9480f';
+
+    echo '<div class="info" style="border-color:' . $border . ';color:' . $color . ';margin-bottom:18px;">' . $message . '</div>';
+    echo '<script>
+    (function(){
+        if (!window.history || !window.history.replaceState) return;
+        var url = new URL(window.location.href);
+        if (url.searchParams.has("once_update")) {
+            url.searchParams.delete("once_update");
+            url.searchParams.delete("_");
+            window.history.replaceState(null, document.title, url.pathname + url.search + url.hash);
+        }
+    })();
+    </script>';
 }
 
 function once_handle_theme_update_request()
@@ -1380,15 +1369,26 @@ function once_handle_theme_update_request()
         exit;
     }
 
-    if (function_exists('once_clear_output_buffers')) {
+    if (!headers_sent() && function_exists('once_clear_output_buffers')) {
         once_clear_output_buffers();
     }
 
+    $notice_type = 'success';
     try {
         $message = once_upgrade_theme_from_github();
         \Widget\Notice::alloc()->set(_t($message), 'success');
     } catch (Exception $e) {
-        \Widget\Notice::alloc()->set(_t('主题在线更新失败：%s', $e->getMessage()), 'error');
+        $notice_type = 'error';
+        $message = _t('主题在线更新失败：%s', $e->getMessage());
+        \Widget\Notice::alloc()->set($message, 'error');
+    }
+
+    if (headers_sent()) {
+        $GLOBALS['once_theme_update_result'] = [
+            'type' => $notice_type,
+            'message' => $message
+        ];
+        return;
     }
 
     header('Location: ' . \Typecho\Common::url('options-theme.php', Helper::options()->adminUrl));
