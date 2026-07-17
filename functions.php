@@ -59,7 +59,7 @@ function themeConfig($form)
     $form->addInput($midRight);
     $icpbeian = new Typecho_Widget_Helper_Form_Element_Text('icpbeian', NULL, NULL, _t('<span class="themeConfig"><h3>底部设置</h3></span><div class="info">个性化设置</div>备案号码'), _t('不填写则不显示'));
     $form->addInput($icpbeian);
-    $showlinks = new Typecho_Widget_Helper_Form_Element_Radio('showlinks', ['0' => _t('不显示'), '1' => _t('显示')], '0', _t('选择<b>显示</b>前请先启用links插件. 友情链接'), _t('是否显示首页友情链接'));
+    $showlinks = new Typecho_Widget_Helper_Form_Element_Radio('showlinks', ['0' => _t('不显示'), '1' => _t('显示')], '0', _t('友情链接'), _t('是否在页脚显示友情链接'));
     $form->addInput($showlinks);
     $tongji = new Typecho_Widget_Helper_Form_Element_Textarea('tongji', NULL, '<li><a href="/">首页</a></li>', _t('Footer代码'), _t('支持HTML'));
     $form->addInput($tongji);

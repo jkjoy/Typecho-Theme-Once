@@ -3,20 +3,38 @@
 </div>
 </section>
 </main>
-<?php if ($this->options->showlinks): ?>
+<?php
+$footerLinks = [];
+if ($this->options->showlinks) {
+    try {
+        $db = Typecho_Db::get();
+        $prefix = $db->getPrefix();
+        $footerLinks = $db->fetchAll(
+            $db->select()
+                ->from($prefix . 'links')
+                ->where('state = ?', 1)
+                ->where('sort = ?', 'home')
+                ->order('sort', Typecho_Db::SORT_ASC)
+                ->order($prefix . 'links.order', Typecho_Db::SORT_ASC)
+        );
+    } catch (Exception $e) {
+        $footerLinks = [];
+    }
+}
+?>
+<?php if (!empty($footerLinks)): ?>
 <section class="links mobile_none">
     <div class="container">
         <span>友情链接：</span>
         <?php
-        try {
-            // 检查links表是否存在
-            $db = Typecho_Db::get();
-            $db->fetchAll($db->select()->from('table.links')->limit(1));
-            // 如果没有异常，表存在，输出友情链接
-            Links_Plugin::output('<a href="{url}" target="_blank" rel="me noopener" title="{title}">{name}</a>');
-        } catch (Exception $e) {
-            // 表不存在或查询失败，显示提示信息
-            echo '<span style="color: #999;">请先安装links插件</span>';
+        foreach ($footerLinks as $link) {
+            $rawName = trim((string)($link['name'] ?? ''));
+            $name = once_esc_html($rawName !== '' ? $rawName : '未命名站点');
+            $url = once_esc_url($link['url'] ?? '#');
+            $descriptionRaw = trim((string)($link['description'] ?? ''));
+            $title = once_esc_attr($descriptionRaw !== '' ? $descriptionRaw : $rawName);
+
+            echo '<a href="' . $url . '" target="_blank" rel="me noopener" title="' . $title . '">' . $name . '</a>';
         }
         ?>
     </div>
